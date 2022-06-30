@@ -1,9 +1,0 @@
-{
-  "navigationBarTitleText": "",
-  "enablePullDownRefresh": false,
-  "usingComponents": {
-    "free-transparent-bar": "/components/free-ui/free-transparent-bar",
-    "free-moment-list": "/components/free-ui/free-moment-list",
-    "free-mymoment-list": "/components/free-ui/free-mymoment-list"
-  }
-}

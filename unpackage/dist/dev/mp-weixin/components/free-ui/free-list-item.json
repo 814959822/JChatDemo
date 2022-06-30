@@ -1,6 +1,0 @@
-{
-  "component": true,
-  "usingComponents": {
-    "free-badge": "/components/free-ui/free-badge"
-  }
-}
