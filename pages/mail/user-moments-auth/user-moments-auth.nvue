@@ -1,0 +1,98 @@
+<template>
+	<view class="page">
+		<free-nav-bar title='朋友权限' bgColor="bg-light" showBack :showRight='false'></free-nav-bar>
+		<!--  -->
+
+
+
+		<text class="font-sm flex text-secondary px-3 pt-4 pb-1">设置朋友权限</text>
+		<free-liat-item @click='setPermissions("all")' boxStyle='height:110rpx;' :showRightIcon='false'
+			:showLeftIcon='false' textClassP='py-3  ml-3' title="朋友、朋友圈、微信运动等" showRight>
+			<view v-if="permissions==='all'" slot='right' class="pr-2">
+				<text class="font-max main-text-color">✓</text>
+			</view>
+		</free-liat-item>
+		<free-liat-item @click='setPermissions("chat")' boxStyle='height:110rpx;' :showRightIcon='false'
+			:showLeftIcon='false' textClassP='py-3  ml-3' title="仅聊天" showRight>
+			<view v-if="permissions==='chat'" slot='right' class="pr-2">
+				<text class="font-max main-text-color">✓</text>
+			</view>
+		</free-liat-item>
+		<text v-if="permissions==='chat'" class="font-sm text-secondary px-3">对方看不到你的朋友圈，状态等</text>
+		<block v-if="permissions==='all'">
+			<!--  -->
+			<text class="font-sm flex text-secondary px-3 pt-4 pb-1">朋友圈和状态</text>
+			<free-liat-item  bghover="bg-white" boxStyle='height:110rpx;' :showRightIcon='false' :showLeftIcon='false'
+				textClassP='py-3 ml-3' title="不让他(她)看" showRight>
+				<switch style="transform:scale(0.8)" color="#06BD5D" slot='right' @change="change('lookme')"
+					:checked="!!!form.lookme" />
+			</free-liat-item>
+			<free-liat-item bghover="bg-white" boxStyle='height:110rpx;' :showRightIcon='false' :showLeftIcon='false'
+				textClassP='py-3  ml-3' title="不看他(她)" showRight>
+				<switch style="transform:scale(0.8)" color="#06BD5D" slot='right' @change="change('lookhim')"
+					:checked="!!!form.lookhim" />
+			</free-liat-item>
+		</block>
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	export default {
+		data() {
+			return {
+				id: 0,
+				form: {
+					lookme: 1,
+					lookhim: 1
+				},
+				permissions: 'all'
+			}
+		},
+		components: {
+			freeNavBar,
+			freeLiatItem
+		},
+		onLoad(e) {
+			if (e.user_id) {
+				this.id = e.user_id
+			}
+			if (e.params) {
+				this.form = JSON.parse(e.params)
+			}
+		},
+		methods: {
+			setPermissions(type) {
+				this.permissions = type
+				// if (this.permissions === 'chat') {
+				// 	this.form.lookhim = 0
+				// 	this.form.lookme = 0
+				// 	this.submit()
+				// }
+				// if (this.permissions === 'all') {
+				// 	this.form.lookhim = 1
+				// 	this.form.lookme = 1
+				// 	this.submit()
+				// }
+			},
+			submit() {
+				$H.post('/friend/setmomentauth/' + this.id, this.form).then(res => {
+					uni.showToast({
+						title: '修改成功',
+						icon: 'none'
+					})
+				})
+			},
+			change(key) {
+				this.form[key] = this.form[key] ? 0 : 1
+				this.submit()
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

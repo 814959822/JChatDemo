@@ -1,0 +1,326 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/common/wecome/wecome",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false,
+				"app-plus": {
+					"titleNView": false,
+					"animationType": "none"
+				}
+			}
+
+		},
+		{
+			"path": "pages/common/login/login",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/tabber/index/index",
+			"style": {
+
+			}
+		}, {
+			"path": "pages/tabber/mail/mail",
+			"style": {
+
+			}
+
+		}, {
+			"path": "pages/tabber/find/find",
+			"style": {
+
+			}
+
+		}, {
+			"path": "pages/tabber/my/my",
+			"style": {
+
+			}
+
+		}, {
+			"path": "pages/chat/chat/chat",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/chat/video/video",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/chat/chat-set/chat-set",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/user-base/user-base",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/user-remark-tag/user-remark-tag",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/user-setup/user-setup",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/user-tag-set/user-tag-set",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/user-moments-auth/user-moments-auth",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/send-card/send-card",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/user-report/user-report",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/find/moments/moments",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": true,
+				"navigationBarTextStyle": "white",
+				"app-plus": {
+					"pullToRefresh": {
+						"support": true,
+						"style": "circle"
+					}
+				}
+			}
+
+		}, {
+			"path": "pages/my/userInfo/userInfo",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}
+
+		, {
+			"path": "pages/my/setnickname/setnickname",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}
+
+		, {
+			"path": "pages/my/code/code",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/my/fava/fava",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": true
+			}
+
+		}, {
+			"path": "pages/common/search/search",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/find/add-moment/add-moment",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}
+
+		, {
+			"path": "pages/my/setting/setting",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/addfriend/addfriend",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/apply-list/apply-list",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": true
+			}
+
+		}, {
+			"path": "pages/mail/mail/mail",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/group-list/group-list",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": true
+			}
+
+		}, {
+			"path": "pages/chat/group-remark/group-remark",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/chat/chat-list/chat-list",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/chat/chat-history/chat-history",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/chat/group-user/group-user",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/mail/tag-list/tag-list",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": true
+			}
+
+		}, {
+			"path": "pages/mail/tag-read/tag-read",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/chat/scan-add/scan-add",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/find/userMoment/userMoment",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/find/momentInfo/momentInfo",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/find/momentnum/momentnum",
+			"style": {
+				"navigationBarTitleText": "",
+				"enablePullDownRefresh": false
+			}
+
+		}
+
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "微信",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#ffffff",
+		"app-plus": {
+			"titleNView": "false",
+			"scrollIndicator": "none"
+		}
+	},
+	"tabBar": {
+		"borderStyle": "#d5d5d5",
+		"backgroundColor": "#f7f7f7",
+		"color": "#000000",
+		"selectedColor": "06bd5d",
+		"list": [{
+				"iconPath": "static/tabbar/index.png",
+				"selectedIconPath": "static/tabbar/index-select.png",
+				"text": "聊天",
+				"pagePath": "pages/tabber/index/index"
+			},
+			{
+				"iconPath": "static/tabbar/mail.png",
+				"selectedIconPath": "static/tabbar/mail-select.png",
+				"text": "通讯录",
+				"pagePath": "pages/tabber/mail/mail"
+			},
+			{
+				"iconPath": "./static/tabbar/find.png",
+				"selectedIconPath": "static/tabbar/find-select.png",
+				"text": "发现",
+				"pagePath": "pages/tabber/find/find"
+			},
+			{
+				"iconPath": "static/tabbar/my.png",
+				"selectedIconPath": "static/tabbar/my-select.png",
+				"text": "我",
+				"pagePath": "pages/tabber/my/my"
+			}
+		]
+	}
+}

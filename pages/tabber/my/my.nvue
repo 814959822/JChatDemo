@@ -1,0 +1,96 @@
+<template>
+	<view class="page">
+		<free-nav-bar bgColor='bg-white'>
+			<view slot="right" >
+				
+			</view>
+			
+		</free-nav-bar>
+
+		<free-list-item @click='open("my/userInfo/userInfo")'
+		
+			:cover="user.avatar? user.avatar :'/static/images/userpic.png'" coverSize='120' :title="nickname" showRight>
+			<view class="flex flex-column">
+				<text class="text-dark font-lg font-weight-bold">{{nickname}}</text>
+				<text class="text-light-muted mt-2 font ">微信号：{{user.username}}</text>
+			</view>
+			<view slot='right'>
+				<text class="iconfont font-sm pr-2 text-muted">&#xe6bb;</text>
+			</view>
+		</free-list-item>
+		<!-- 分割线  -->
+		<free-divider></free-divider>
+		<free-list-item title='支付' showRight>
+			<text slot="icon" class="iconfont main-text-color font-lg py-2">&#xe62a;</text>
+		</free-list-item>
+		<free-divider></free-divider>
+		<free-list-item @click="open('my/fava/fava')" title='收藏' showRight>
+			<text slot="icon" class="iconfont text-primary font-lg py-2">&#xe786;</text>
+		</free-list-item>
+		<!-- <free-list-item @click='open("find/moments/moments?key=moment")' title='朋友圈' showRight>
+			<text slot="icon" class="iconfont font-lg py-2">&#xe608;</text>
+		</free-list-item> -->
+		<free-list-item @click='open("find/userMoment/userMoment?key=moment")' title='朋友圈' showRight>
+			<text slot="icon"  class="iconfont text-primary font-lg py-2">&#xe60c;</text>
+		</free-list-item>
+		<free-list-item title='卡包' showRight>
+			<text slot="icon" class="iconfont main-text-color font-lg py-2">&#xe780;</text>
+		</free-list-item>
+		<free-list-item title='表情' showRight>
+			<text slot="icon" class="iconfont text-orange font-lg py-2">&#xe61d;</text>
+		</free-list-item>
+		<free-divider></free-divider>
+		<free-list-item @click="open('my/setting/setting')" title='设置 ' showRight>
+			<text slot="icon" class="iconfont text-primary font-lg py-2">&#xe624;</text>
+		</free-list-item>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import auth from "@/common/mixin/auth.js"
+	import freeListItem from "@/components/free-ui/free-list-item.vue"
+	import freeIconButton from "@/components/free-ui/free-icon-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	import freeDivider from "@/components/free-ui/free-divider.vue"
+	export default {
+		mixins: [auth],
+		components: {
+			freeNavBar,
+			freeIconButton,
+			freeListItem,
+			freeDivider
+		},
+		data() {
+			return {
+
+			}
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user
+			}),
+			nickname(){
+				return this.user.nickname?this.user.nickname:this.user.username
+			}
+		},
+		methods: {
+			openUserInfo() {
+				uni.navigateTo({
+					url: '../../my/userInfo/userInfo'
+				})
+			},
+			open(path) {
+				uni.navigateTo({
+					url: '/pages/' + path
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

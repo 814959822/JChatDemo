@@ -1,0 +1,54 @@
+
+view,
+label,
+swiper-item,
+scroll-view {
+  display:flex;
+  flex-direction:column;
+  flex-shrink: 0;
+  flex-grow: 0;
+  flex-basis: auto;
+  align-items: stretch;
+  align-content: flex-start;
+}
+view,
+image,
+input,
+scroll-view,
+swiper,
+swiper-item,
+text,
+textarea,
+video {
+  position: relative;
+  border: 0px solid #000000;
+  box-sizing: border-box;
+}
+swiper-item {
+  position: absolute;
+}
+button {
+  margin: 0;
+}
+
+
+.page {
+	background-color: #ededed;
+
+	min-height: 100vh;
+	height: auto;
+}
+.target {
+
+	opacity: 0;
+	transition-property: opacity;
+	transition-duration: .2s;
+}
+.origin {
+	/* 这里可以简写哈 */
+	
+	opacity: 1;
+	transition-property: opacity;
+	transition-duration: .35s;
+}
+

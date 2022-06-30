@@ -1,0 +1,1 @@
+<view data-event-opts="{{[['tap',[['$emit',['click']]]]]}}" class="flex justify-center align-center" style="height:90rpx;width:80rpx;" bindtap="__e"><text class="{{['iconfont',iconfontSize]}}">{{icon}}</text></view>

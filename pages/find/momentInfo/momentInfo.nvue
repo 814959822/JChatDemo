@@ -1,0 +1,304 @@
+<template>
+	<free-nav-bar :showRight='false' showBack title="详情">
+	</free-nav-bar>
+	<view  class="p-3 flex align-start border-light-secondary">
+		
+		<!-- 头像 -->
+		<free-avater @click='openUser' size='80' :src='item.avatar'></free-avater>
+		<view class="pl-2 flex-1 flex flex-column">
+			<!-- 昵称 -->
+			<text class="font-md font-weight-bold mb-1 text-hover-primary">{{item.user_name}}</text>
+			<!-- 内容 -->
+			<text v-if="item.content" class="font text-dark mb-1">{{item.content}}</text>
+			<!-- 图片 -->
+			<view v-if="item.image.length" class="py-2 flex flex-wrap">
+				<block v-for="(image,imageIndex) in item.image" :key='imageIndex'>
+					<!-- 单图 -->
+					<free-image @click='preview(image)' v-if="item.image.length===1"
+						imageClass='bg-chat' :src='image'>
+					</free-image>
+					<!-- 多图 -->
+					<image @click='preview(image)' v-else :src="image" mode="aspectFill"
+						style="width: 180rpx;height: 180rpx;margin-right: 5rpx;margin-bottom: 5rpx;"
+						class="bg-chat"></image>
+				</block>
+			</view>
+			<!-- 视频 -->
+			<view v-else-if="item.video" class="py-2">
+				<video :src="item.video.src" class="bg-chat ro" :poster="item.video.poster" style="height: 300rpx; width: 500rpx;" loop
+					controls></video>
+			</view>
+			<!-- 时间 -->
+			<view class="flex align-center justify-between">
+				<text class="font-sm text-light-muted">{{item.created_at|formatTime}}</text>
+				<view @click="doAction({item,index})" class="rounded px-1 bg-chat">
+					<text class="font-lg text-hover-primary iconfont">&#xe611;</text>
+				</view>
+			</view>
+			<!-- 点赞｜评论列表 -->
+			<view v-if="item.likes.length||item.comments.length" class="bg-chat rounded mt-2">
+				<!-- 点赞 -->
+				<view v-if="item.likes.length" class="flex align-start px-2">
+					<text
+						class="flex-shrink align-center iconfont font-sm font-weight-bold py-1 text-hover-primary">&#xe62e;</text>
+					<view class="flex flex-1  flex-wrap">
+						<text v-for="(s,si) in item.likes" :key='si'
+							class="font-sm py-1 font-weight-bold text-hover-primary ml-1">{{s.name}}</text>
+					</view>
+				</view>
+				<!-- 评论 -->
+				<view :class="(item.likes.length&&item.comments.length)?'border-top':''" v-if="item.comments.length"
+					class="flex align-start px-2">
+					<view class="flex flex-column flex-1">
+						<view v-for="(c,ci) in item.comments" :key='ci' class=" py-1 flex">
+							<text v-if="!c.reply" class="text-hover-primary font-weight-bold font-sm">{{c.user.name}}</text>
+							<view v-else class="flex align-center">
+								<text class="text-hover-primary font-weight-bold font-sm">{{c.user.name}}</text>
+								<text class="text-muted font-sm">回复</text>
+								<text class="text-hover-primary font-weight-bold font-sm">{{c.reply.name}}</text>
+							</view>
+							<text @click="replyEvent({index,reply:c.user,item})"
+								class="font-sm  flex-1 text-dark">:{{c.content}}</text>
+						</view>
+					</view>
+				</view>
+			</view>
+		</view>
+		
+		<!-- 评论框 -->
+		<free-popup ref='action' fixedBottom transformOrigin=''>
+			<view class="border-bottom flex px-3 bg-light align-center" style="height: 105rpx;">
+				<textarea @blur="focusState = false"  :focus='focusState' v-model="content" fixed
+					class="bg-white flex flex-1 rounded px-2 p-1 mr-1 font-md" :adjust-position='false'
+					style=" height: 75rpx;" />
+
+				<!-- 表情 -->
+				<free-icon-button @click="changeFaceModal" iconfontSize='font-max' :icon="!faceModal?'\ue608':'\ue605'">
+				</free-icon-button>
+				<!-- 发送按钮 -->
+				<view @click="send" :class="content.length===0?'bg-light border-2 border-secondary':'main-bg-color'"
+					class="ml-1 px-2 flex align-center py-1 rounded" style=" white-space: nowrap;height: 65rpx;">
+					<text class="font" :class="content.length===0?'text-light-muted':'text-white'">发送</text>
+				</view>
+			</view>
+
+			<!-- 表情 -->
+			<scroll-view scroll-y="true" :style="getKeyboardHeight" class="bg-light">
+				<view v-if="faceModal" class="flex flex-wrap">
+					<view style="width: 107rpx;height: 107rpx;" class="flex align-center rounded-2 justify-center"
+						hover-stay-time='50' hover-start-time='0' hover-class="bg-hover-light"
+						v-for="(item,index) in faceList" :key="index" @click="addFace(item)">
+						<text>{{item}}</text>
+
+					</view>
+				</view>
+			</scroll-view>
+		</free-popup>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import $T from "@/common/free-lib/time.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeIconButton from "@/components/free-ui/free-icon-button.vue"
+	import freePopup from "@/components/free-ui/free-popup.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				content: '',
+				scrollTop: 0,
+				faceList: ["😀", "😁", "😂", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗",
+					"😙", "😚", "😇", "😐", "😑", "😶", "😏", "😣", "😥", "😮", "😯", "😪", "😫", "😴",
+					"😌", "😛", "😜", "😝", "😒", "😓", "😔", "😕", "😲", "😷", "😖", "😞", "😟", "😤",
+					"😢", "😭", "😦", "😧", "😨", "😬", "😰", "😱", "😳", "😵", "😡", "😠"
+				],
+				faceModal: false,
+				// 评论对象
+				commentindex: -1,
+
+				//键盘高度
+				KeyHeight: 0,
+				KeyboardHeight: 0,
+				// 键盘焦点
+				focusState: true,
+				reply_user: false,
+				show: false,
+				item: ''
+			}
+		},
+		onPageScroll(e) {
+			this.scrollTop = e.scrollTop
+		},
+		components: {
+			freeNavBar,
+			freeIconButton,
+			freePopup,
+			freeAvater
+		},
+		filters: {
+			formatTime(value) {
+				return $T.gettime(value)
+			}
+		},
+		onShow() {
+			this.getData()
+
+		},
+		onLoad(e) {
+
+			if (e.item) {
+				this.item = JSON.parse(decodeURIComponent(e.item))
+			}
+
+			uni.$on('momentNotice', this.momentNotice)
+			return this.show = true
+		},
+		destroyed() {
+			uni.$off('momentNotice', this.momentNotice)
+		},
+		mounted() {
+			// 监听键盘高度
+			uni.onKeyboardHeightChange(res => {
+				this.KeyHeight = res.height
+				this.faceModal = false
+				if (this.KeyboardHeight === 0) {
+					this.KeyboardHeight = res.height
+				}
+			})
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user
+			}),
+			nickname() {
+				return this.item.user_name
+			},
+			avatar() {
+				let avatar = ''
+				avatar = this.item.avatar
+
+				return avatar = avatar || '/static/images/userpic.png'
+			},
+			getKeyboardHeight() {
+				// #ifdef APP-PLUS-NVUE
+				
+				return this.KeyboardHeight ? `height:${this.KeyboardHeight}px;` : 'height:0rpx;'
+				// #endif
+				// #ifdef H5
+				if (this.faceModal) {
+					return 'height:350rpx;'
+				}
+				// #endif
+				return
+			}
+		},
+		methods: {
+			openUser() {
+				uni.navigateTo({
+					url: "/pages/mail/user-base/user-base?user_id=" + this.item.user_id
+				})
+			},
+			// 回复评论
+			replyEvent(e) {
+				this.content = ''
+				this.faceModal = false
+				this.commentindex = e.index
+				this.reply_user = e.reply
+				this.$refs.action.show()
+			},
+			// 点击操作菜单
+			doAction(e) {
+				uni.showActionSheet({
+					itemList: ['点赞', '评论'],
+					success: res => {
+						if (res.tapIndex === 0) {
+							this.doSupport()
+						} else {
+							this.content = ''
+							this.faceModal = false
+							this.focusState = true
+							this.commentindex = e.index
+							this.$refs.action.show()
+						}
+					},
+
+				});
+			},
+			// 点赞
+			doSupport() {
+				$H.post('/moment/like', {
+					id: this.item.moment_id
+				}).then(res => {
+					let i = this.item.likes.findIndex(item => item.id === this.user.id)
+					if (i !== -1) {
+						// 取消点赞
+						this.item.likes.splice(i, 1)
+					} else {
+						// 点赞
+						this.item.likes.push({
+							id: this.user.id,
+							name: this.user.nickname || this.user.username
+						})
+					}
+					uni.showToast({
+						title: i !== -1 ? '取消点赞成功' : '点赞成功',
+						icon: 'none'
+					})
+				})
+
+			},
+			// 添加表情
+			addFace(item) {
+				this.content += item
+			},
+			// 开启或关闭表情包面板
+			changeFaceModal() {
+
+				setTimeout(() => {
+					this.faceModal = !this.faceModal
+
+				}, 100)
+				if (!this.faceModal) {
+					uni.hideKeyboard()
+
+					this.focusState = false
+				} else {
+
+					this.focusState = true
+				}
+			},
+			// 发送
+			send() {
+				$H.post('/moment/comment', {
+					id: this.item.moment_id,
+					content: this.content,
+					reply_id: this.reply_user ? this.reply_user.id : 0
+				}).then(res => {
+					this.item.comments.push({
+						content: this.content,
+						user: {
+							id: this.user.id,
+							name: this.user.nickname || this.user.username
+						},
+						reply: this.reply ? this.reply : null
+					})
+					uni.showToast({
+						title: '评论成功',
+						icon: 'none'
+					})
+				})
+				this.$refs.action.hide()
+			},
+
+		}
+	}
+</script>
+
+<style>
+
+</style>

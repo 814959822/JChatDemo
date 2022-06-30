@@ -1,0 +1,247 @@
+<template>
+	<view class="page">
+		<!-- 导航栏 -->
+		<free-nav-bar bgColor='bg-white' showBack :showRight="!isself">
+			<view slot="right">
+				<free-icon-button @click='openAction' :icon="'\ue612'"></free-icon-button>
+			</view>
+
+		</free-nav-bar>
+		<view class="px-3 py-4 bg-white border-bottom border-light-secondary flex align-center">
+			<free-avater :src="detail.avatar" size="120"></free-avater>
+			<view class="flex flex-column ml-3 flex-1">
+				<view class="flex align-center justify-between">
+					<text class="font-lg font-weight-bold mb-1">{{detail.nickname}}</text>
+					<text style="width: 40rpx;height: 40rpx;" v-if="detail.star" class="font-lg text-warning iconfont">&#xe634;</text>
+					
+				</view>
+
+				<text class="font text-light-muted">微信号：{{detail.username}}</text>
+				<text class="font text-light-muted">地区：北京 朝阳</text>
+			</view>
+		</view>
+
+		<free-liat-item v-if="detail.friend" @click="navigate(toSetTags)" boxStyle='height:110rpx;'
+			:showLeftIcon='false' textClassP='py-3  ml-3' showRight>
+			<view class="flex flex-1 align-center  justify-between">
+				<text style="white-space: nowrap;"
+					class="flex font-md text-dark mr-3">{{detail.tags.length?"标签":"设置备注和标签"}}</text>
+				<div v-if='tags.length' class="flex text-ellipsis " style="width: 400rpx; ">
+					<text class="font-md text-light-muted" v-for="(item,index) in tags" :key='index'>{{item}}，</text>
+				</div>
+			</view>
+			<!-- <text slot='right' class="iconfont font-lg py-15">&#xe617;</text> -->
+		</free-liat-item>
+		<free-liat-item v-if="detail.friend" boxStyle='height:110rpx;' :showLeftIcon='false' textClassP='py-3  ml-3'
+			@click="navigate(tosetmoment)" title="朋友权限" showRight>
+			
+		</free-liat-item>
+		<free-liat-item @click="navigate(openMoments)" :showLeftIcon='false' textClassP='py-3  ml-3' showRight>
+			<view class="flex align-center">
+				<text class="font-md text-dark mr-3">朋友圈</text>
+				<template v-if="moments">
+					
+					<image v-for="(item,index) in moments" :key="index" mode="aspectFill" :src="item"
+						style="width: 90rpx;height: 90rpx;" class="mr-2 bg-chat"></image>
+				</template>
+			</view>
+			
+		</free-liat-item>
+
+		<free-divider v-if="detail.friend||isself"></free-divider>
+		<free-liat-item v-if="detail.friend||isself" boxStyle='height:110rpx;' :showLeftIcon='false'
+			textClassP='py-3  ml-3' title="更多信息" showRight>
+			
+		</free-liat-item>
+		<free-divider></free-divider>
+
+
+		<view v-if="!detail.friend&&!isself" @click="toaddFriend" hover-stay-time='50' hover-start-time='0'
+			hover-class="bg-hover-light" style="height: 110rpx;border-color: #ededed ;"
+			class="border-bottom  bg-white flex align-center justify-center ">
+			<text style="font-weight: 600;" class="font text-hover-primary">添加到通讯录</text>
+		</view>
+		<block v-else-if='!isself'>
+			<view @click="navigate(tochat)" hover-stay-time='50' hover-start-time='0' hover-class="bg-hover-light"
+				style="height: 110rpx;border-color: #ededed ;"
+				class="border-bottom  bg-white flex align-center justify-center ">
+				<text class="iconfont text-hover-primary m-2">&#xe64c;</text>
+				<text style="font-weight: 600;" class="font text-hover-primary">发消息</text>
+			</view>
+			<view v-if="!detail.isblack" hover-stay-time='50' hover-start-time='0' hover-class="bg-hover-light"
+				style="height: 110rpx;" class="bg-white flex align-center justify-center ">
+				<text class="iconfont text-hover-primary m-2">&#xe635;</text>
+				<text style="font-weight: 600;" class="font text-hover-primary">语音视频通话</text>
+			</view>
+		</block>
+		<view v-if="detail.isblack" class="flex justify-center align-center flex-column py-2">
+			<text class="font-sm text-light-muted text-center pb-5">已添加至黑名单，你将不再收到对方的消息</text>
+			<text class="font-sm text-primary text-center pt-5">投诉</text>
+		</view>
+
+
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import auth from "@/common/mixin/auth.js"
+	import freeIconButton from "@/components/free-ui/free-icon-button.vue"
+	import freeDivider from "@/components/free-ui/free-divider.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	export default {
+		mixins: [auth],
+		data() {
+			return {
+				detail: {
+					area: "",
+					avatar: "",
+					friend: "",
+					id: 0,
+					nickname: "",
+					sex: "",
+					sign: "",
+					username: "",
+					star: 0,
+					lookme: 1,
+					lookhim: 1,
+					tags: [],
+					isblack: 0,	
+				},
+				moments:[],
+			}
+		},
+		components: {
+			freeDivider,
+			freeNavBar,
+			freeAvater,
+			freeLiatItem,
+			freeIconButton
+		},
+		onShow() {
+			// 获取当前用户资料
+			this.getData()
+		},
+
+		onLoad(e) {
+
+			if (!e.user_id) {
+				return this.backToast()
+			}
+			this.detail.id = e.user_id
+
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user
+			}),
+			openMoments() {
+				if(this.detail.id === this.user.id){
+					return 'find/userMoment/userMoment?key=moment'
+				}
+				
+				return 'find/userMoment/userMoment?key=moment&params=' + encodeURIComponent(JSON.stringify({
+					id: this.detail.id,
+					name: this.detail.nickname || this.detail.username,
+					avatar: this.detail.avatar
+				}))
+			},
+			tags() {
+				return this.detail.tags
+			},
+			isself() {
+				return this.detail.id === this.user.id
+			},
+			// 聊天页到
+			tochat() {
+				return 'chat/chat/chat?params=' + encodeURIComponent(
+					JSON.stringify({
+						id: this.detail.id,
+						name: this.detail.nickname ? this.detail.nickname : this.detail.username,
+						avatar: this.detail.avatar,
+						chat_type: "user"
+					}))
+			},
+			toSetTags() {
+				return 'mail/user-remark-tag/user-remark-tag?params=' + JSON.stringify({
+					user_id: this.detail.id,
+					nickname: this.detail.nickname,
+					tags: this.detail.tags ? this.detail.tags.join(',') : ''
+				})
+			},
+			tosetmoment() {
+				return 'mail/user-moments-auth/user-moments-auth?user_id=' + this.detail.id + "&params=" + JSON.stringify({
+					lookme: this.detail.lookme,
+					lookhim: this.detail.lookhim
+				})
+			},
+
+			addFriend() {
+				let obj = {
+					friend_id: this.detail.id,
+					nickname: this.detail.nickname,
+					lookme: typeof this.detail.lookme === 'number' ? this.detail.lookme : 1,
+					lookhim: typeof this.detail.lookhim === 'number' ? this.detail.lookhim : 1
+				}
+
+				return "/pages/mail/addfriend/addfriend?params=" + JSON.stringify(obj)
+			}
+		},
+		methods: {
+			getData() {
+				if(this.detail.id === this.user.id){
+					$H.get('/moment/1').then(res2 => {
+						// console.log(res[0]);
+						if (res2[0].image) {
+							// res[0].image = res[0].image.split(',')
+							// console.log(res[0].image);
+							this.moments=res2[0].image
+						}
+					})
+				}
+				$H.get('/friend/read/' + this.detail.id).then(res => {
+					if (!res) {
+						return this.backToast('该用户不存在')
+					}
+						// console.log(res);
+					if (res.moments && res.moments[0]) {
+						res.moments[0].image = res.moments[0].image.split(',')
+						this.moments=res.moments[0].image
+						// console.log(res.moments[0]);
+						
+					}
+					this.detail = res
+					// console.log(this.detail)
+				})
+				
+			},
+			navigate(path) {
+				uni.navigateTo({
+					url: "/pages/" + path
+				})
+			},
+			openAction() {
+				uni.navigateTo({
+					url: "/pages/mail/user-setup/user-setup?user_id=" + this.detail.id+'&isfriend='+this.detail.friend
+				})
+			},
+
+			// 申请添加好友
+			toaddFriend() {
+				uni.navigateTo({
+					url: this.addFriend
+				})
+			}
+
+		}
+	}
+</script>
+
+<style>
+
+</style>

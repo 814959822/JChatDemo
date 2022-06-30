@@ -1,0 +1,149 @@
+<template>
+	<view class="page">
+		<!-- 导航栏 -->
+		<free-nav-bar title="发现"></free-nav-bar>
+
+		<free-liat-item showRight @click='openMoments' textClassP='align-center' title='朋友圈'>
+			<text slot='icon' class="iconfont main-text-color font-lg py-15">&#xe6ac;</text>
+			<view slot='titleRight'>
+				<free-badge  v-if="notice.num" :value="notice.num"  badgeClass='ml-2' ></free-badge>
+			</view>
+			
+			<view slot='right' class="p-1">
+				<view class="position-relative flex align-center justify-center" style="height: 65rpx;width: 65rpx;" v-if="notice.user_id">
+					<free-avater :src="notice.avatar?notice.avatar:'/static/images/userpic.png'" size="55">
+					</free-avater>
+					<view class="rounded-circle position-absolute bg-danger "
+						style="top: 0rpx;right: 0rpx; width: 20rpx;height: 20rpx;"></view>
+				</view>
+			</view>
+		</free-liat-item>
+		<free-divider></free-divider>
+		<free-liat-item showRight title='视频号'>
+			<text slot='icon' class="iconfont text-orange font-lg py-15">&#xe651;</text>
+		</free-liat-item>
+		<free-divider></free-divider>
+		<free-liat-item @click="scanCode" showRight title='扫一扫'>
+			<text slot='icon' class="iconfont text-primary font-lg py-15">&#xe97e;</text>
+		</free-liat-item>
+		<free-liat-item showRight title='摇一摇'>
+			<text slot='icon' class="iconfont text-primary font-lg py-15">&#xe621;</text>
+		</free-liat-item>
+		<free-divider></free-divider>
+		<free-liat-item showRight title='看一看'>
+			<text slot='icon' class="iconfont font-lg text-warning py-15">&#xe60e;</text>
+		</free-liat-item>
+		<free-liat-item showRight title='搜一搜'>
+			<text slot='icon' class="iconfont text-find font-lg  py-15">&#xe62f;</text>
+		</free-liat-item>
+		<free-divider></free-divider>
+		<free-liat-item showRight title='附近'>
+			<text slot='icon' class="iconfont text-primary font-lg py-15">&#xe609;</text>
+		</free-liat-item>
+		<free-divider></free-divider>
+		<free-liat-item showRight title='购物'>
+			<text slot='icon' class="iconfont text-find font-lg py-15">&#xeb85;</text>
+		</free-liat-item>
+		<free-liat-item showRight title='游戏'>
+			<text slot='icon' class="iconfont main-text-color font-lg py-15">&#xe613;</text>
+		</free-liat-item>
+		<free-divider></free-divider>
+		<free-liat-item showRight title='小程序'>
+			<text slot='icon' style="color: #7865d9;" class="iconfont font-lg py-15">&#xe63c;</text>
+		</free-liat-item>
+		<free-divider></free-divider>
+	</view>
+</template>
+
+<script>
+	import auth from "@/common/mixin/auth.js"
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeBadge from "@/components/free-ui/free-badge.vue"
+	import freeDivider from "@/components/free-ui/free-divider.vue"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		mixins: [auth],
+		components: {
+			freeNavBar,
+			freeLiatItem,
+			freeAvater,
+			freeDivider,
+			freeBadge
+		},
+		data() {
+			return {
+
+			}
+		},
+		computed: {
+			...mapState({
+				notice: state => state.user.notice,
+				
+			})
+		},
+		methods: {
+			openMoments() {
+				uni.navigateTo({
+					url: '../../find/moments/moments'
+				})
+			},
+			scanCode(){
+				uni.scanCode({
+					success: (res) => {
+						if (res.scanType === 'QR_CODE') {
+							let result = JSON.parse(res.result)
+							switch (result.type) {
+								case 'group':
+									uni.showLoading();
+									$H.post('/group/checkrelation', {
+										id: parseInt(result.id)
+									}).then(res2 => {
+										if (!res2.status) {
+											uni.navigateTo({
+												url: '/pages/chat/scan-add/scan-add?params=' +
+													encodeURIComponent(JSON.stringify(
+														res2.group)),
+											});
+										} else {
+											uni.navigateTo({
+												url: '/pages/chat/chat/chat?params=' +
+													encodeURIComponent(JSON.stringify({
+														id: res2.group.id,
+														name: res2.group.name,
+														avatar: res2.group
+															.avatar,
+														chat_type: 'group',
+													})),
+											});
+											this.chat.readChatItem(res2.group.id, res2.group
+												.chat_type)
+										}
+										uni.hideLoading()
+									}).catch(err => {
+										uni.hideLoading()
+									})
+				
+									break
+								case 'user':
+									uni.navigateTo({
+										url: '/pages/mail/user-base/user-base?user_id='+result.id,
+									})
+									break
+							}
+						}
+					}
+				})
+			}
+			
+		}
+	}
+</script>
+
+<style>
+
+</style>

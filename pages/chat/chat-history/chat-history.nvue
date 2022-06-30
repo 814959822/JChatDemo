@@ -1,0 +1,126 @@
+<template>
+	<view class='page'>
+		<free-nav-bar :showNavbar='isNavBar' title='聊天记录' :showRight='false' showBack>
+			<!-- 搜索框 -->
+			<view slot='bottom' class="px-3 py-2 flex  bg-light" style="z-index:10;">
+				<view class="bg-white flex-row flex flex-1 rounded">
+					<view v-if="!isNavBar" style="height: 60rpx;width: 60rpx;" class="flex align-center justify-center">
+						<text class="iconfont font">&#xe61e;</text>
+					</view>
+
+					<input :placeholder-style="isNavBar?'text-align: center;':'text-align:start' " @focus='focus'
+						type="text" style="height: 60rpx;width:100rpx" v-model="keyword" placeholder="搜索"
+						class="font flex-1 px-2" value="" />
+				</view>
+				<!-- 取消 -->
+				<view v-if="!isNavBar" @click='blur' class="pl-3 pr-1  flex align-center justify-center rounded"
+					style="height: 60rpx;">
+					<text class="font text-hover-primary">取消</text>
+				</view>
+
+			</view>
+			<view slot='maskBottom' class="">
+				<!-- 蒙版 -->
+				<view @click="blur" v-if="(!isNavBar&&!keyword)" :style="'top:'+navBarHeight+'px;'"
+					class="position-fixed left-0 right-0 bottom-0" style="background-color:rgba(0,0,0,.5);">
+				</view>
+			</view>
+		</free-nav-bar>
+
+		<view :style="isNavBar?'height: 100rpx;':'height: 10rpx;'">
+
+		</view>
+
+		<scroll-view scroll-y="true">
+
+			<!-- 搜索/联系人 -->
+
+			<!-- 聊天信息列表 -->
+			<view :id="'chatItem_'+index" v-for="(item,index) in allList" :key='index'>
+				<free-chat-item ref='chatItem' :shownickname="true" :pretime="index>0?list[index-1].create_time:''"
+					:item="item" :index="index">
+				</free-chat-item>
+			</view>
+			<view v-if="keyword!==''&&searchList.length===0" class="flex align-center justify-center"
+				style="height: 100rpx;">
+				<text class="font text-light-muted">暂无搜索结果</text>
+			</view>
+		</scroll-view>
+
+	</view>
+</template>
+
+<script>
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeChatItem from "@/components/free-ui/free-chat-item.vue"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	import {
+		mapState
+	} from "vuex"
+	export default {
+		data() {
+			return {
+				isNavBar: true,
+				keyword: '',
+				list: [],
+				statusBarHeight: 0,
+				navBarHeight: 0
+			}
+		},
+		components: {
+			freeNavBar,
+			freeMainButton,
+			freeChatItem,
+			freeAvater
+		},
+		onLoad(e) {
+			// #ifdef APP-PLUS-NVUE
+			this.statusBarHeight = plus.navigator.getStatusbarHeight()
+			// #endif
+			this.navBarHeight = this.statusBarHeight + uni.upx2px(100)
+
+			this.list = this.chat.getChatDetail()
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user,
+				chat: state => state.user.chat
+			}),
+			// 搜索结果列表
+			searchList() {
+				if (this.keyword === '') {
+					return []
+				}
+				return this.list.filter(item => {
+					return item.data.indexOf(this.keyword) !== -1
+				})
+			},
+			// 最终列表
+			allList() {
+				return this.keyword === '' ?
+					this.list : this.searchList
+			}
+		},
+		methods: {
+			focus() {
+				if (this.isNavBar) {
+					this.isNavBar = false
+
+				}
+
+			},
+			blur() {
+				if (!this.isNavBar) {
+					this.keyword = ''
+					this.isNavBar = true
+					uni.hideKeyboard()
+				}
+			},
+		}
+	}
+</script>
+
+<style>
+
+</style>

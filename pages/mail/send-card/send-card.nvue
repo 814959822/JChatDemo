@@ -1,0 +1,253 @@
+<template>
+	<view>
+		<free-nav-bar :showNavbar='isNavBar' title='选择' :showRight='true' showBack>
+			<view v-if="!selectCount" slot='right' @click='handleNavBarBtn' class=" mr-2 px-3  rounded"
+				style="padding-top: 15rpx;padding-bottom: 15rpx; ">
+				<text class="font text-dark">{{muliSelect?'单选':'多选'}}</text>
+			</view>
+			<view v-else-if="selectCount" slot='right'>
+				<free-main-button :name="'发送('+selectCount+')'"></free-main-button>
+			</view>
+			
+			<!-- 搜索框 -->
+			<view slot='bottom' class="px-3 py-2 flex  bg-light" style="z-index:10;">
+				<view class="bg-white flex-row flex flex-1 rounded">
+					<view v-if="!isNavBar" style="height: 60rpx;width: 60rpx;" class="flex align-center justify-center">
+						<text class="iconfont font">&#xe61e;</text>
+					</view>
+
+					<input :placeholder-style="isNavBar?'text-align: center;':'text-align:start' " @focus='focus'
+						 type="text" style="height: 60rpx;width:100rpx" v-model="keyword" placeholder="搜索"
+						class="font flex-1 px-2" value="" />
+				</view>
+				<!-- 取消 -->
+				<view v-if="!isNavBar" @click='blur' class="pl-3 pr-1  flex align-center justify-center rounded"
+					style="height: 60rpx;">
+					<text class="font text-hover-primary">取消</text>
+				</view>
+
+			</view>
+			<view slot='maskBottom' class="">
+				<!-- 蒙版 -->
+				<view @click="blur" v-if="(!isNavBar&&!keyword)" :style="'top:'+navBarHeight+'px;'"
+					class="position-fixed left-0 right-0 bottom-0" style="background-color:rgba(0,0,0,.5);">
+				</view>
+			</view>
+		</free-nav-bar>
+
+		<view :style="isNavBar?'height: 100rpx;':'height: 10rpx;'">
+
+		</view>
+
+
+		<!-- 搜索/联系人 -->
+		<free-liat-item boxStyle='height:100rpx;padding-left:30rpx' :showRight='false' :showLeftIcon='false'
+			@click='openMail' title='更多联系人'>
+		</free-liat-item>
+		<view class="px-2 py-1  bg-light">
+			<text class="font-sm text-muted">最近聊天</text>
+		</view>
+		<free-liat-item @click='selectItem(item)' v-for="(item,index) in allList" :key='index' :title='item.username'
+			:cover='item.avatar'>
+			<view v-if="muliSelect" slot='icon'
+				style="border-width: 3rpx; width: 45rpx;height: 45rpx;margin-right: 30rpx;"
+				class="border flex align-center justify-center border-secondary rounded-circle">
+				<view v-if="item.checked" class="main-bg-color flex align-center justify-center  rounded-circle"
+					style="width: 45rpx; height: 45rpx;">
+					<text class="font-sm text-white text-center">✓</text>
+				</view>
+			</view>
+		</free-liat-item>
+
+		<view v-if="keyword!==''&&searchList.length===0" class="flex align-center justify-center"
+			style="height: 100rpx;">
+			<text class="font text-light-muted">暂无搜索结果</text>
+		</view>
+
+		<!-- 发送框 -->
+
+		<free-confirm ref='confirm' title="发送给:">
+
+			<view class="">
+				<scroll-view :show-scrollbar='false' scroll-x="true" >
+					<view class="flex">
+						<view v-for="i in 9" :key='i' class="mr-1">
+							<free-avater size='70' src='/static/images/mail/friend.png'></free-avater>
+						</view>
+					</view>
+				</scroll-view>
+				<view class="my-3 rounded p-2">
+					<text class="font-sm text-light-muted">[个人名片]个人</text>
+				</view>
+				<input type="text" style="height: 60rpx;" placeholder="给朋友留言"
+					class="pl-2 mb-4 rounded font border-bottom bg-light" value="" />
+			</view>
+		</free-confirm>
+	</view>
+</template>
+
+<script>
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeConfirm from "@/components/free-ui/free-confirm.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				isNavBar: true,
+				muliSelect: false,
+				keyword: '',
+				list: [{
+						username: '昵称1',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+					{
+						username: '昵称2',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+					{
+						username: '昵称3',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+					{
+						username: '昵称4',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+					{
+						username: '昵称5',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+
+					{
+						username: '昵称6',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+					{
+						username: '昵称7',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+
+					{
+						username: '昵称8',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+
+					{
+						username: '昵称9',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+
+					{
+						username: '昵称10',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+
+					{
+						username: '昵称11',
+						avatar: '/static/images/mail/friend.png',
+						checked: false
+					},
+				],
+				statusBarHeight: 0,
+				navBarHeight: 0
+			}
+		},
+		components: {
+			freeNavBar,
+			freeMainButton,
+			freeLiatItem,
+			freeConfirm,
+			freeAvater
+		},
+		onLoad() {
+			// #ifdef APP-PLUS-NVUE
+			this.statusBarHeight = plus.navigator.getStatusbarHeight()
+			// #endif
+			this.navBarHeight = this.statusBarHeight + uni.upx2px(100)
+
+		},
+		computed: {
+			// 选中列表
+			selectList() {
+				return this.list.filter(item => item.checked)
+			},
+			// 选中数量
+			selectCount() {
+				return this.selectList.length
+			},
+			// 搜索结果列表
+			searchList() {
+				if (this.keyword === '') {
+					return []
+				}
+				return this.list.filter(item => {
+					return item.username.indexOf(this.keyword) !== -1
+				})
+			},
+			// 最终列表
+			allList() {
+				return this.keyword === '' ?
+					this.list : this.searchList
+			}
+		},
+		methods: {
+			// 点击导航栏按钮事件
+			handleNavBarBtn() {
+				this.muliSelect = !this.muliSelect
+
+			},
+			// 选中或取消
+			selectItem(item) {
+				if (this.muliSelect) {
+					// 限制选中数量
+					if (!item.checked && this.selectCount === 9) {
+						return uni.showToast({
+							title: '最多选中9个',
+							icon: 'none'
+						})
+					}
+
+					return item.checked = !item.checked
+				}
+				this.$refs.confirm.show((canael) => {
+					canael()
+				})
+			},
+			focus() {
+				if (this.isNavBar) {
+					this.isNavBar = false
+
+				}
+
+			},
+			blur() {
+				if (!this.isNavBar) {
+					this.keyword=''
+					this.isNavBar = true
+					uni.hideKeyboard()
+				}
+			},
+			// 更多联系人
+			openMail() {
+				uni.navigateTo({
+					url: '../mail/mail'
+				});
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

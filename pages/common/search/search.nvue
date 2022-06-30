@@ -1,0 +1,120 @@
+<template>
+	<view class="page">
+		<free-nav-bar bgColor="bg-light" :showNavbar='false' :showRight='true' showBack>
+			<!-- 搜索框 -->
+			<view slot='bottom' class="px-3 flex" style="z-index:10;padding-top: 25rpx;padding-bottom: 25rpx;">
+				<view class="bg-white flex flex-row rounded flex-1 ">
+					<view style="height: 60rpx;width: 60rpx;" class="flex align-center justify-center">
+						<text class="iconfont font">&#xe61e;</text>
+					</view>
+					<input v-model="keykord" @confirm="confirm" type="text" :focus="true" style="height: 60rpx;"
+						:placeholder="placeholder" class="font flex-1" value="" />
+				</view>
+				<view class="pl-3  flex align-center justify-center rounded" style="height: 60rpx;">
+					<text @click="back" class="font text-hover-primary">取消</text>
+				</view>
+			</view>
+		</free-nav-bar>
+		<view style="height: 25rpx;">
+
+		</view>
+		<view v-if="searchType===''&&list.length===0">
+			<view v-if="" class="pb-5 pt-3 flex align-center justify-center">
+				<text class="font text-light-muted">搜索指定内容</text>
+			</view>
+			<view class="px-4 flex flex-wrap">
+				<view v-for="(item,index) in typeList" :key="index" @click="changeSearchType(item)"
+					class="border-left border-right flex align-center justify-center mb-3" style="width: 223rpx;">
+					<text class="font text-hover-primary">{{item.name}}</text>
+				</view>
+			</view>
+		</view>
+		<freeListItem v-for="(item,index) in list" :key="index" :title="item.nickname?item.nickname:item.username"
+			@click='openUserBase(item.id)' :cover="item.avatar?item.avatar:'/static/images/demo/demo5.jpg'"></freeListItem>
+	</view>
+</template>
+
+<script>
+	import freeListItem from "@/components/free-ui/free-list-item.vue"
+	import $H from "@/common/free-lib/request.js"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				typeList: [{
+						name: '聊天记录',
+						key: 'history'
+					},
+					{
+						name: '用户',
+						key: 'user'
+					},
+					{
+						name: '群聊',
+						key: 'group'
+					},
+				],
+				searchType: '',
+				keykord: '',
+				list: [],
+			}
+		},
+		components: {
+			freeNavBar,
+			freeListItem
+		},
+		onLoad(e) {
+			if(e.searchType){
+				this.searchType=e.searchType
+			}
+		},
+		computed: {
+			placeholder() {
+				let obj = this.typeList.find((item) => {
+					return item.key === this.searchType
+				})
+				if (obj) {
+					return '搜索' + obj.name
+				}
+				return '请输入关键字'
+			}
+		},
+		methods: {
+			back() {
+				if (this.searchType == '') {
+					return uni.navigateBack({
+						delta: 1,
+						animationType: 'fade-out',
+						animationDuration: 200
+					})
+				}
+				this.searchType = ''
+			},
+			confirm() {
+				$H.post('/search/user', {
+					keyword: this.keykord
+				}).then(res => {
+					this.list = []
+					if (res) {
+						this.list.push(res)
+					}
+
+				})
+			},
+			// 打开用户资料
+			openUserBase(user_id){
+				uni.navigateTo({
+					url:'../../mail/user-base/user-base?user_id='+user_id
+				})
+			},
+			changeSearchType(item){
+				this.searchType=item.key
+			}
+			
+		}
+	}
+</script>
+
+<style>
+
+</style>

@@ -1,0 +1,177 @@
+<template>
+	<view class="page">
+		<free-nav-bar :showNavbar='isNavBar' title='群聊' :showRight='true' showBack>
+			<view slot='right'>
+				<free-icon-button @click='handleNavBarBtn' iconfontSize='font-lg' :icon="'\ue6e3'"></free-icon-button>
+			</view>
+
+
+
+			<!-- 搜索框 -->
+			<view v-if="!isNavBar" slot='bottom' class="px-2 py-15 flex  bg-light" style="z-index:10;">
+				<view class="bg-white flex-row flex align-center flex-1 rounded">
+					<view v-if="!isNavBar" style="height: 60rpx;width: 60rpx;" class="flex align-center justify-center">
+						<text class="iconfont font">&#xe61e;</text>
+					</view>
+
+					<input :placeholder-style="isNavBar?'text-align: center;':'text-align:start' " @focus='focus'
+						:focus="!isNavBar" @blur='blur' type="text" style="height: 60rpx;" placeholder="搜索"
+						class="font flex-1" value="" />
+				</view>
+				<!-- 取消 -->
+				<view v-if="!isNavBar" @click='blur' class="pl-3 pr-1  flex align-center justify-center rounded"
+					style="height: 60rpx;">
+					<text class="font text-hover-primary">取消</text>
+				</view>
+
+			</view>
+			<view slot='maskBottom'>
+				<!-- 蒙版 -->
+				<view @click="blur" v-if="(!isNavBar)"
+					:style="'top:'+navBarHeight+'px;background-color: rgba(0,0,0,0.5;'"
+					class="position-fixed left-0 right-0 bottom-0">
+				</view>
+			</view>
+		</free-nav-bar>
+
+		<view v-if="!show"
+			class="position-fixed top-0 bottom-0 left-0 right-0 bg-light flex justify-center align-center">
+			<text class="text-muted font">正在加载...</text>
+		</view>
+		<view v-if="!isNavBar" :style="isNavBar?'height: 90rpx;':'height: 0rpx;'">
+
+		</view>
+
+		<scroll-view @scrolltolower='onReachBottom' :show-scrollbar='false' scroll-y="true">
+			<!-- 搜索/联系人 -->
+			<view class="px-2 py-1  bg-light">
+				<text class="font-sm text-muted">群聊</text>
+			</view>
+			<free-liat-item @click='handle(item)' v-for="(item,index) in list" :key='index' :title='item.name'
+				:cover='item.avatar||"/static/images/groupavatar.png"' :showRight="true" :showRightIcon="false">
+			</free-liat-item>
+			<!-- 上拉加载  -->
+			<view v-if="list.length>=10" class="flex align-center justify-center bg-light py-4">
+				<text class="text-muted font">{{loadmore}}</text>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeIconButton from "@/components/free-ui/free-icon-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				isNavBar: true,
+				muliSelect: false,
+				statusBarHeight: 0,
+				navBarHeight: 0,
+				page: 1,
+				loadmore: '上拉加载更多',
+				list: [],
+				show: false,
+			}
+		},
+		components: {
+			freeNavBar,
+			freeLiatItem,
+			freeAvater,
+			freeIconButton
+		},
+		onLoad() {
+			// #ifdef APP-PLUS-NVUE
+			this.statusBarHeight = plus.navigator.getStatusbarHeight()
+			// #endif
+			this.navBarHeight = this.statusBarHeight + uni.upx2px(90)
+			this.show = true
+		},
+		computed: {
+
+		},
+		onShow() {
+			this.$store.dispatch('getApply', this.page)
+			$H.get('/group/' + this.page).then(res => {
+				this.list = res
+			})
+		},
+		// 下啦刷新
+		onPullDownRefresh() {
+			this.page = 1
+			$H.get('/group/' + this.page).then(res => {
+				this.list = res
+				uni.showToast({
+					title: "刷新成功",
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			}).catch(err => {
+				uni.showToast({
+					title: '刷新失败',
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			})
+		},
+
+		methods: {
+			onReachBottom() {
+				if (this.loadmore !== '上拉加载更多') {
+					return
+				}
+				this.loadmore = '加载中...'
+				this.page += 1
+				$H.get('/group/' + this.page).then(res => {
+					this.list = [...this.list, ...res]
+					this.loadmore = this.list.length === this.page * 10 ? '上拉加载更多' : `${this.list.length}个群聊`
+				}).catch(err => {
+					uni.showToast({
+						title: '刷新失败',
+						icon: 'none'
+					})
+					this.page = this.page - 1
+					this.loadmore = '上拉加载更多'
+				})
+			},
+			// 点击导航栏按钮事件
+			handleNavBarBtn() {
+				this.focus()
+
+			},
+			focus() {
+				if (this.isNavBar) {
+					this.isNavBar = false
+				}
+			},
+			blur() {
+				if (!this.isNavBar) {
+					this.keyword = ''
+					this.isNavBar = true
+					uni.hideKeyboard()
+				}
+			},
+			handle(item) {
+				uni.navigateTo({
+					url: '/pages/chat/chat/chat?params=' + encodeURIComponent(
+						JSON.stringify({
+							id: item.id,
+							name: item.name,
+							avatar: item.avatar,
+							chat_type: "group"
+						}))
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

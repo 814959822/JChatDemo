@@ -1,0 +1,41 @@
+<template>
+	<view class="page flex">
+		<image class="flex flex-1" src="/static/images/bg.png" mode="scaleToFill"></image>
+		<view class="flex justify-center position-fixed " style="width: 750rpx;top: 200rpx">
+			<image src="../../../static/images/logo.png" style="width: 320rpx;" class="flex " mode="aspectFit"></image>
+		</view>
+		<view class="flex justify-center  position-fixed " style="width: 750rpx; bottom: 160rpx; ">
+			<image src="/static/images/text.png" style="width: 350rpx;" mode="aspectFit"></image>
+		</view>
+		<text class="position-fixed font text-white text-center" style="bottom: 80rpx;width: 750rpx;">个人开发使用</text>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+
+			}
+		},
+		onLoad() {
+			this.golog()
+		},
+		methods: {
+			golog() {
+				setTimeout(function() {
+					// console.log('1');
+					uni.navigateTo({
+						url: '../login/login',
+						animationType: 'none',
+					});
+				}, 2000)
+
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

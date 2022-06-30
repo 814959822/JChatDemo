@@ -1,0 +1,82 @@
+{
+  "pages": [
+    "pages/common/wecome/wecome",
+    "pages/common/login/login",
+    "pages/tabber/index/index",
+    "pages/tabber/mail/mail",
+    "pages/tabber/find/find",
+    "pages/tabber/my/my",
+    "pages/chat/chat/chat",
+    "pages/chat/video/video",
+    "pages/chat/chat-set/chat-set",
+    "pages/mail/user-base/user-base",
+    "pages/mail/user-remark-tag/user-remark-tag",
+    "pages/mail/user-setup/user-setup",
+    "pages/mail/user-tag-set/user-tag-set",
+    "pages/mail/user-moments-auth/user-moments-auth",
+    "pages/mail/send-card/send-card",
+    "pages/mail/user-report/user-report",
+    "pages/find/moments/moments",
+    "pages/my/userInfo/userInfo",
+    "pages/my/setnickname/setnickname",
+    "pages/my/code/code",
+    "pages/my/fava/fava",
+    "pages/common/search/search",
+    "pages/find/add-moment/add-moment",
+    "pages/my/setting/setting",
+    "pages/mail/addfriend/addfriend",
+    "pages/mail/apply-list/apply-list",
+    "pages/mail/mail/mail",
+    "pages/mail/group-list/group-list",
+    "pages/chat/group-remark/group-remark",
+    "pages/chat/chat-list/chat-list",
+    "pages/chat/chat-history/chat-history",
+    "pages/chat/group-user/group-user",
+    "pages/mail/tag-list/tag-list",
+    "pages/mail/tag-read/tag-read",
+    "pages/chat/scan-add/scan-add",
+    "pages/find/userMoment/userMoment",
+    "pages/find/momentInfo/momentInfo",
+    "pages/find/momentnum/momentnum"
+  ],
+  "subPackages": [],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "微信",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#ffffff"
+  },
+  "tabBar": {
+    "borderStyle": "#d5d5d5",
+    "backgroundColor": "#f7f7f7",
+    "color": "#000000",
+    "selectedColor": "06bd5d",
+    "list": [
+      {
+        "iconPath": "static/tabbar/index.png",
+        "selectedIconPath": "static/tabbar/index-select.png",
+        "text": "聊天",
+        "pagePath": "pages/tabber/index/index"
+      },
+      {
+        "iconPath": "static/tabbar/mail.png",
+        "selectedIconPath": "static/tabbar/mail-select.png",
+        "text": "通讯录",
+        "pagePath": "pages/tabber/mail/mail"
+      },
+      {
+        "iconPath": "./static/tabbar/find.png",
+        "selectedIconPath": "static/tabbar/find-select.png",
+        "text": "发现",
+        "pagePath": "pages/tabber/find/find"
+      },
+      {
+        "iconPath": "static/tabbar/my.png",
+        "selectedIconPath": "static/tabbar/my-select.png",
+        "text": "我",
+        "pagePath": "pages/tabber/my/my"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

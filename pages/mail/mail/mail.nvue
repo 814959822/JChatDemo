@@ -1,0 +1,444 @@
+<template>
+	<view class="page">
+		<!-- 导航栏 -->
+		<free-nav-bar :title="titleText" :showRight='type!=="sendCard"' showBack>
+			<view slot='right'>
+				<free-main-button v-if="type!=='sendCard'" :disabled='isDisabled' :name="buttonText" @click='submit'>
+				</free-main-button>
+			</view>
+		</free-nav-bar>
+
+		<!-- 通讯录列表 -->
+		<scroll-view scroll-y="true" :style="'height:'+sccollHeight+'px;'" :scroll-into-view="scrollInto">
+
+			<template v-if="type==='see'">
+				<view class="bg-light" style="height: 50rpx;">
+
+				</view>
+				<free-list-item boxStyle='padding-left: 20rpx; height:133rpx' v-for="(item,index) in typeList"
+					:key="item.key" textClassP="py-2 border-0" :Subtitle='item.subtitle' :title="item.name"
+					:showRightIcon="false" showRight @click="clickType(index)">
+					<view slot="icon">
+						<view v-if="typeIndex!==index" style="border-width: 3rpx; width: 30rpx;height: 30rpx;"
+							class="border rounded-circle flex align-center justify-center ">
+						</view>
+						<view v-if="typeIndex===index" :class="boderIconColor"
+							style="border-width: 3rpx; width: 30rpx;height: 30rpx;"
+							class="border rounded-circle position-relative">
+							<view :class="titleIconColor" class="rounded-circle position-absolute"
+								style="width: 18rpx; height: 18rpx;top: 4rpx;left: 4rpx;">
+							</view>
+						</view>
+					</view>
+				</free-list-item>
+
+			</template>
+			<template v-if="type!=='see'||(type==='see'&&(typeIndex===2||typeIndex===3))">
+				<view v-for="(item,index) in list" :key="index" :id="'item-'+item.title">
+					<view v-if="item.list.length" class="flex align-center py-1 px-2 bg-light">
+						<text class="font-sm text-dark">{{item.title}}</text>
+					</view>
+					<free-list-item v-for="(item2,index2) in item.list" :key="index2" :title="item2.name"
+						:cover="item2.avatar || '/static/images/userpic.png'" :showRightIcon="false" showRight
+						@click="selectItem(item2)">
+						<view v-if="type!=='sendCard'" slot="icon"
+							style=" width: 45rpx;height: 45rpx;margin-right: 30rpx;"
+							:style="!detail.includes(item2.user_id)?'border-width: 3rpx;':'border-width: 0rpx;'"
+							class="border rounded-circle flex align-center justify-center mr-4">
+
+							<view v-if="detail.includes(item2.user_id)||id===item2.user_id"
+								class="flex bg-main-rgba align-center justify-center  rounded-circle"
+								style="width: 45rpx; height: 45rpx;">
+								<text class="font-sm text-white text-center">✓</text>
+							</view>
+							<view v-if="!detail.includes(item2.user_id)&&item2.checked" :class="titleIconColor"
+								class="flex align-center justify-center  rounded-circle"
+								style="width: 45rpx; height: 45rpx;">
+								<text class="font-sm text-white text-center">✓</text>
+							</view>
+						</view>
+					</free-list-item>
+				</view>
+
+			</template>
+
+		</scroll-view>
+
+		<!-- 侧边导航 -->
+		<view v-if="type!=='see'||(type==='see'&&(typeIndex===2||typeIndex===3))" @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend"
+			class="position-fixed flex flex-column  right-0 bottom-0"
+			style="width: 50rpx;margin-top: 200rpx;margin-bottom: 200rpx;" :style="'top:'+top+'px;'">
+			<view v-for="(item,index) in list" :key="index" class="flex-1 flex align-center justify-center">
+		
+				<text :class="item.title!==current||'main-bg-color rounded-2 text-white'" style="width: 24rpx;font-size: 22rpx;" class="text-center">{{item.title}}</text>
+			</view>
+		</view>
+		<view v-if="current" style="right: 70rpx;width: 120rpx;height: 100rpx;" :style="'top:'+Y+'px;'" class="position-fixed flex align-center">
+			
+		
+		<view  class=" bg-light-dark flex align-center justify-center rounded-circle"
+			 style=" width: 100rpx;height: 100rpx;">
+			
+			<text style="font-size: 60rpx;" class="text-white">{{current}}</text>
+		</view>
+		<text style="left: 60rpx;font-size: 80rpx;" class="position-absolute text-light-dark iconfont">&#xec1d;</text>
+		</view>
+		<!-- <view style="bottom: 0;left: 0;right: 0;height: 110rpx;z-index: 990;background-color: #f7f7f7;" class="flex justify-end align-center position-fixed">
+			<free-main-button  :name="buttonText" @click='submit'></free-main-button>
+		</view> -->
+
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeBadge from "@/components/free-ui/free-badge.vue"
+	import auth from "@/common/mixin/auth.js"
+	import freeListItem from "@/components/free-ui/free-list-item.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		mixins: [auth],
+		components: {
+			freeNavBar,
+			freeListItem,
+			freeBadge,
+			freeMainButton,
+		},
+		data() {
+			return {
+				typeIndex: 0,
+				typeList: [{
+					name: "公开",
+					key: "all",
+					subtitle: "所有朋友可见"
+				}, {
+					name: "私密",
+					key: "none",
+					subtitle: "仅自己可见"
+				}, {
+					name: "部分可见",
+					key: "only",
+					subtitle: "选中的朋友可见"
+				}, {
+					name: "不给谁看",
+					key: "except",
+					subtitle: "选中的朋友不可见"
+				}],
+
+				top: 0,
+				srcollHeight: 0,
+				sccollHeight: 0,
+				scrollInto: '',
+				current: '',
+
+				selectList: [],
+				detail: [],
+				type: "",
+
+				limit: 9,
+				Y: 0,
+				id: 0
+			}
+		},
+		onShow() {
+			this.selectList=[]
+			this.$store.dispatch('getMailList')
+		},
+		onLoad(e) {
+			let res = uni.getSystemInfoSync()
+			this.top = res.statusBarHeight + uni.upx2px(90)
+			this.srcollHeight = res.windowHeight - this.top - uni.upx2px(490)
+			this.sccollHeight = res.windowHeight - this.top
+			if (e.type) {
+				this.type = e.type
+			}
+			if (e.limit) {
+				this.limit = parseInt(e.limit)
+			}
+			if (e.id) {
+				this.id = parseInt(e.id)
+				if (e.type === 'inviteGroup') {
+					// this.limit=1
+					let detail = JSON.parse(e.detail)
+					this.detail = detail.map(item => item.id)
+					// console.log(this.detail)
+				}
+			}
+
+			this.$store.dispatch('getMailList')
+			// console.log(this.list);
+		},
+		computed: {
+			...mapState({
+				applyCount: state => state.user.apply.count,
+				list: state => state.user.mailList,
+				chat: state => state.user.chat,
+			}),
+			isDisabled() {
+				return !this.selectList.length && (this.type === "" || this.type === "createGroup" || this.type ===
+					"inviteGroup")
+			},
+			titleIconColor() {
+				return this.typeIndex !== 3 ? 'main-bg-color' : 'bg-danger'
+			},
+			boderIconColor() {
+				return this.typeIndex !== 3 ? 'border-main' : 'border-danger'
+			},
+			titleText() {
+				let text = '选择联系人'
+				if (this.type === 'createGroup') {
+					text = '发起群聊'
+				}
+				if (this.type === 'see') {
+					text = '谁可以看'
+				}
+				return text
+			},
+			buttonText() {
+				let text = '完成'
+				if (this.type === 'remind') {
+					text = '确定'
+				}
+				if (this.type === 'see' && (this.typeIndex === 0 || this.typeIndex === 1)) {
+					this.selectCount
+					return text = '完成'
+				}
+				if (this.selectList.length === 0) {
+					return text
+				}
+				return text + '(' + this.selectCount + ')'
+			},
+			modalTop() {
+				return (this.srcollHeight - uni.upx2px(150)) / 2
+			},
+			// 每个索引高度
+			itemHeight() {
+				let count = this.list.length
+				if (count < 1) {
+					return 0
+				}
+				return this.srcollHeight / count
+			},
+			// 选中数量
+			selectCount() {
+				return this.selectList.length
+			}
+		},
+
+		methods: {
+
+			clickType(e) {
+				// 清空选中
+				// if(this.typeIndex!==e){
+				// 	this.$store.dispatch('getMailList')
+				// 	this.selectList=[]
+				// }
+				this.typeIndex = e
+			},
+
+			touchstart(e) {
+				this.changeScrollInto(e)
+			},
+			touchmove(e) {
+				this.changeScrollInto(e)
+			},
+			touchend(e) {
+				this.current = ''
+			},
+			changeScrollInto(e) {
+
+				let Y = e.touches[0].pageY
+				
+				// #ifdef MP
+				Y = Y - this.top
+				// #endif
+				
+				let res = uni.getSystemInfoSync()
+				let YY = Y + uni.upx2px(290)
+				if (YY <= uni.upx2px(390)) {
+					YY = uni.upx2px(390)
+				} else if ((res.windowHeight - YY) <= uni.upx2px(300)) {
+					YY = res.windowHeight - uni.upx2px(300)
+				}
+				this.Y = YY
+				
+				let index = Math.floor(Y / this.itemHeight)
+				let item = this.list[index]
+				
+				if (item) {
+					this.scrollInto = 'item-' + item.title
+					this.current = item.title
+				}
+				// console.log(this.scrollInto);
+			},
+			// 选中/取消选中
+			selectItem(item) {
+				if (this.detail.includes(item.user_id) || this.id === item.user_id) {
+					return
+				}
+				if (!item.checked && this.selectCount === this.limit) {
+					// 选中|限制选中数量
+					return uni.showToast({
+						title: '最多选中 ' + this.limit + ' 个',
+						icon: 'none'
+					});
+				}
+				if (this.type === 'sendCard') {
+					uni.$emit("sendItem", {
+						sendType: "card",
+						data: item.name,
+						options: {
+							avatar: item.avatar,
+							username: item.username,
+							id: item.user_id
+						},
+						type: "card"
+					})
+					uni.navigateBack({
+						delta: 1
+					})
+
+				}
+
+				item.checked = !item.checked
+				if (item.checked) { // 选中
+					this.selectList.push(item)
+				} else { // 取消选中
+					let index = this.selectList.findIndex(v => v === item)
+					if (index > -1) {
+						this.selectList.splice(index, 1)
+					}
+				}
+			},
+
+			submit() {
+				// console.log(this.type);
+				if (this.type !== 'see' && this.selectCount === 0) {
+					return uni.showToast({
+						title: "请先选择",
+						icon: 'none'
+					})
+				}
+				switch (this.type) {
+					case 'createGroup': //创建群组
+					let selectList = this.selectList.map(item => item.user_id)
+					 selectList.push(this.id)
+						$H.post('/group/create', {
+							ids: selectList,
+						}).then(res => {
+							uni.showToast({
+								title: '创建群聊成功',
+								icon: 'none'
+							});
+							let detail = this.chat.getChatListItem(res, 'group')
+							detail.shownickname = true
+							this.chat.updateChatItem({
+								id: res,
+								chat_type: 'group',
+							}, detail)
+
+							uni.switchTab({
+								url: "../../tabber/index/index"
+							})
+						})
+						break;
+					case 'sendCard':
+						let item = this.selectList[0]
+						// console.log(item)
+						uni.$emit("sendItem", {
+							sendType: "card",
+							data: item.name,
+							options: {
+								avatar: item.avatar,
+								username: item.username,
+								id: item.user_id
+							},
+							type: "card"
+						})
+						uni.navigateBack({
+							delta: 1
+						})
+						break;
+					case 'remind':
+						uni.$emit("sendResult", {
+							data: this.selectList,
+							type: "remind"
+						})
+						uni.navigateBack({
+							delta: 1
+						})
+						break;
+					case 'see':
+						let k = this.typeList[this.typeIndex].key
+						// console.log(k)
+						if (k !== 'all' && k !== 'none' && !this.selectCount) {
+
+							return uni.showModal({
+								content: "请至少选择一个联系人",
+								showCancel: false,
+								confirmText: '知道了'
+							})
+						}
+						uni.$emit("sendResult", {
+							data: {
+								k,
+								v: this.selectList,
+							},
+							type: "see"
+						})
+						uni.navigateBack({
+							delta: 1
+						})
+						break;
+					case 'inviteGroup':
+						this.selectList.forEach(
+							item => $H.post('/group/invite', {
+								id: this.id,
+								user_id: item.user_id
+							}).then(() => {
+								
+								uni.reLaunch({
+									url: "../tabber/index/index"
+								})
+								uni.showToast({
+									title: '邀请成功',
+									icon: 'none'
+								})
+								let detail = this.chat.getChatListItem(res, 'group')
+								
+								// detail.shownickname = true
+								// this.chat.updateChatItem({
+								// 	id: res,
+								// 	chat_type: 'group',
+								// }, detail)
+								uni.navigateBack({
+									delta: 1
+								})
+								
+							})
+						)
+
+
+
+						break;
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.arrow {
+		height: 0;
+		width: 0;
+		border-width: 40rpx 40rpx;
+		border-style: solid;
+		border-color: transparent;
+		border-left-color: #6c757d;
+
+	}
+</style>

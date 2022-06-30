@@ -1,0 +1,12 @@
+
+.freePopup::before {
+	position: absolute;
+	right: 40rpx;
+	content: '';
+	width: 0;
+	height: 0;
+	margin-top: -40rpx;
+	border: 20rpx solid transparent;
+	border-bottom-color: #343a40;
+}
+

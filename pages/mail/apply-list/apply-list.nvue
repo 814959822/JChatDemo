@@ -1,0 +1,184 @@
+<template>
+	<view class="page">
+		<free-nav-bar :showNavbar='isNavBar' title='新的朋友' :showRight='true' showBack>
+			<view slot='right' @click='handleNavBarBtn' class=" mr-2   rounded"
+				style="padding-top: 15rpx;padding-bottom: 15rpx; ">
+				<text class="font text-dark">添加好友</text>
+			</view>
+
+			<!-- 搜索框 -->
+			<view slot='bottom' class="p-2 flex  bg-light" style="z-index:10;;">
+				<view class="bg-white flex-row flex align-center flex-1 rounded">
+					<view v-if="!isNavBar" style="height: 60rpx;width: 60rpx;" class="flex align-center justify-center">
+						<text class="iconfont font">&#xe61e;</text>
+					</view>
+
+					<input :placeholder-style="isNavBar?'text-align: center;':'text-align:start' " @focus='focus'
+						 type="text" style="height: 60rpx;" placeholder="微信号/手机号" class="font flex-1"
+						value="" />
+				</view>
+				<!-- 取消 -->
+				<view v-if="!isNavBar" @click='blur' class="pl-3 pr-1  flex align-center justify-center rounded"
+					style="height: 60rpx;">
+					<text class="font text-hover-primary">取消</text>
+				</view>
+
+			</view>
+			<view slot='maskBottom' class="">
+				<!-- 蒙版 -->
+				<view @click="blur" v-if="(!isNavBar)" :style="'top:'+navBarHeight+'px;'"
+					class="position-fixed left-0 bg-light right-0 bottom-0">
+				</view>
+			</view>
+		</free-nav-bar>
+
+		<view :style="isNavBar?'height: 100rpx;':'height: 10rpx;'">
+
+		</view>
+
+
+		<!-- 搜索/联系人 -->
+		<!-- <free-liat-item boxStyle='height:100rpx;padding-left:30rpx' :showRight='false' :showLeftIcon='false'
+			title='更多联系人'>
+		</free-liat-item> -->
+		<!-- <view class="px-2 py-1  bg-light">
+			<text class="font-sm text-muted">最近聊天</text>
+		</view> -->
+		<free-liat-item v-for="(item,index) in applyList" :key='index'
+			:title='item.user.nickname?item.user.nickname:item.user.username'
+			:cover='item.user.avatar?item.user.avatar:"/static/images/userpic.png"' :showRight="true"
+			:showRightIcon="false">
+			<view slot='right'>
+				<free-main-button v-if="item.status==='pending'" @click='handle(item)' name='同意'>
+				</free-main-button>
+				<text v-else class="text-muted p-2 mr-2 font">{{item|formatTitle}}</text>
+			</view>
+		</free-liat-item>
+		<!-- 上拉加载  -->
+		<view v-if="applyList.length>=10" class="flex align-center justify-center bg-light py-4">
+			<text class="text-muted font">{{loadmore}}</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				isNavBar: true,
+				muliSelect: false,
+				statusBarHeight: 0,
+				navBarHeight: 0,
+				page: 1,
+				loadmore: '上拉加载更多',
+			}
+		},
+		components: {
+			freeNavBar,
+			freeMainButton,
+			freeLiatItem,
+			freeAvater
+		},
+		onLoad() {
+			// #ifdef APP-PLUS-NVUE
+			this.statusBarHeight = plus.navigator.getStatusbarHeight()
+			// #endif
+			this.navBarHeight = this.statusBarHeight + uni.upx2px(100)
+
+		},
+		filters: {
+			formatTitle(value) {
+				let obj = {
+					agree: '已通过',
+					refuse: '已拒绝',
+					ignore: '已忽略'
+				}
+				return obj[value.status];
+			}
+		},
+		computed: {
+			...mapState({
+				applyList: state => state.user.apply.rows
+			})
+		},
+		onShow() {
+			this.page = 1
+			this.loadmore = '上拉加载更多'
+			this.$store.dispatch('getApply', this.page)
+		},
+		// 下啦刷新
+		onPullDownRefresh() {
+			this.page = 1
+			this.$store.dispatch('getApply', this.page).then(res => {
+				uni.showToast({
+					title: "刷新成功",
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			}).catch(err => {
+				uni.showToast({
+					title: '刷新失败',
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			})
+		},
+		onReachBottom() {
+			if (this.loadmore !== '上拉加载更多') {
+				return
+			}
+			this.loadmore = '加载中...'
+			this.page = this.page + 1
+			this.$store.dispatch('getApply', this.page).then(res => {
+				this.loadmore = this.applyList.length == this.page * 10 ? '上拉加载更多' : '没有更多了'
+			}).catch(err => {
+				this.page = this.page - 1
+				uni.showToast({
+					title: '加载失败',
+					icon: 'none'
+				})
+				this.loadmore = '上拉加载更多'
+			})
+		},
+		methods: {
+			// 点击导航栏按钮事件
+			handleNavBarBtn() {
+				this.muliSelect = !this.muliSelect
+
+			},
+
+			focus() {
+				if (this.isNavBar) {
+					this.isNavBar = false
+
+				}
+
+			},
+
+			blur() {
+				if (!this.isNavBar) {
+					this.keyword = ''
+					this.isNavBar = true
+					uni.hideKeyboard()
+				}
+			},
+			handle(item) {
+				uni.navigateTo({
+					url: '/pages/mail/addfriend/addfriend?id=' + item.id
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

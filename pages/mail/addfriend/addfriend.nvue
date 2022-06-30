@@ -1,0 +1,148 @@
+<template>
+	<view>
+		<free-nav-bar bgColor="bg-white" :title='navBarTitle' showBack :showRight='false'></free-nav-bar>
+		<!--  -->
+		<view class="m-3">
+
+
+			<view v-if="id===0" class="flex flex-column">
+				<text class="font-sm text-muted px-3 pt-4 pb-1">发送添加好友申请</text>
+				<input type="text" style="height: 100rpx;" class="mx-3 pl-3 rounded font bg-chat"
+					placeholder="你好..." />
+			</view>
+			<view class="flex flex-column">
+				<text class="font-sm text-muted px-3 pt-4 pb-1">设置备注</text>
+				<input type="text" placeholder-class="text-muted" :placeholder="form.nickname"
+					v-model="form.nickname" style="height: 100rpx;" class="mx-3 pl-3 rounded font bg-chat" />
+			</view>
+			<view class="flex flex-column">
+				<text class="font-sm text-muted px-3 pt-4 pb-1">标签</text>
+				<view @click="openTagSet" class="mx-3 flex justify-between align-center py-3 px-3 rounded bg-chat">
+					<text class="font ">添加标签</text>
+					<text class="font text-muted iconfont">&#xe617;</text>
+				</view>
+			</view>
+
+			<view class="flex flex-column">
+				<text class="font-sm text-muted  px-3 pt-4 pb-1">设置朋友权限</text>
+				<view class="mx-3 flex flex-column rounded">
+					<view style="height: 100rpx;"
+						class="rounded-top flex border-bottom justify-start align-center  bg-chat ">
+
+						<text class=" pl-3 font text-center ">朋友、朋友圈、微信运动等</text>
+
+					</view>
+					<view style="height: 100rpx;" class="flex rounded-bottom justify-start align-center  bg-chat ">
+
+						<text class=" pl-3 font ">仅聊天</text>
+
+					</view>
+				</view>
+			</view>
+
+			<view class="flex flex-column">
+				<text class="font-sm text-muted  px-3 pt-4 pb-1">朋友圈和状态</text>
+				<view class="mx-3 flex flex-column rounded">
+					<view style="height: 100rpx;"
+						class="rounded-top flex justify-between border-bottom align-center  bg-chat ">
+
+						<text class=" pl-3 font text-center ">不让他看我</text>
+						<switch @change="form.lookme=form.lookme?0:1" style="transform:scale(0.8)" color="#06BD5D"
+							:checked="!!!form.lookme" />
+					</view>
+					<view style="height: 100rpx;" class="flex rounded-bottom justify-between align-center  bg-chat ">
+
+						<text class=" pl-3 font ">不看他</text>
+						<switch @change="form.lookhim=form.lookhim?0:1" style="transform:scale(0.8)" color="#06BD5D"
+							:checked="!!!form.lookhim" />
+					</view>
+				</view>
+			</view>
+
+
+			<view @click="submit" style="height: 235rpx;" class="flex align-center justify-center ">
+				<view class="main-bg-color rounded flex align-center justify-center "
+					style="width: 344rpx;height: 75rpx; ">
+					<text style="font-weight: 600; " class="font text-white">{{id>0?'同意':'发送'}}</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import auth from "@/common/mixin/auth.js"
+	import $H from "@/common/free-lib/request.js"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	export default {
+		mixins: [auth],
+		data() {
+			return {
+				form: {
+					friend_id: 0,
+					nickname: '',
+					lookme: 1,
+					lookhim: 1,
+				},
+				id: 0
+			}
+		},
+		onLoad(e) {
+			// if(!e.params){
+			// 	return this.backToast()
+			// }
+			if (e.params) {
+				this.form = JSON.parse(e.params)
+			}
+			if (e.id) {
+				this.id = e.id
+			}
+		},
+		components: {
+			freeNavBar,
+			freeLiatItem
+		},
+		computed:{
+			navBarTitle(){
+				return this.id>0?"通过好友验证":"申请添加好友"
+			}
+		},
+		methods: {
+			submit() {
+				// 添加好友
+				if (this.id === 0) {
+					return $H.post('/apply/addfriend', this.form).then(res => {
+						uni.showToast({
+							title: '申请成功',
+							icon: 'none'
+						})
+						uni.navigateBack({
+							delta: 1
+						})
+					})
+				}
+				// 处理好友
+
+				$H.post('/apply/handle/'+this.id, {
+					...this.form,
+					status: 'agree'
+				}).then(res => {
+					uni.showToast({
+						title: '处理成功',
+						icon: 'none'
+					})
+					uni.navigateBack({
+						delta: 1
+					})
+					this.$store.dispatch('getMailList')
+				})
+
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

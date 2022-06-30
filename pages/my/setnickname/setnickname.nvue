@@ -1,0 +1,76 @@
+<template>
+	<view class="page">
+		<free-nav-bar title="更改名字" showBack>
+			<!-- 发送按钮 -->
+			<view  slot='right'>
+				<free-main-button :disabled="isPreserve" @click="save" name="保存"></free-main-button>
+			</view>
+			
+		</free-nav-bar>
+		<view  class="p-3">
+			<input type="text" maxlength='16' v-model="content"  style="border-bottom-width: 2rpx;" class="font-md pb-1 mt-3 border-bottom">
+			<text class="font pt-3 text-secondary">好名字可以让你的朋友更容易记住你</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				nickname:'',
+				content:''
+			}
+		},
+		onLoad(e) {
+			this.content=e.nickname
+			this.nickname = e.nickname
+		},
+		components: {
+			freeNavBar,
+			freeMainButton
+		},
+		computed:{
+			...mapState({
+				user: state => state.user.user
+			}),
+			isPreserve(){
+				return this.content.trim()===''||this.content === this.nickname
+			}
+		},
+		methods: {
+			// 保存
+			save(){
+				if(this.content===''){
+					return uni.showToast({
+						title:'不能为空',
+						icon:'none'
+					})
+				}
+				$H.post('/user/update',{
+					avatar:this.user.avatar,
+					nickname:this.content
+				}).then(res=>{
+					this.$store.commit('updateUser',{
+						k:'nickname',
+						v:this.content
+					})
+					uni.$emit("nickname",this.content)
+					uni.navigateBack({
+						delta:1
+					})
+				})
+			},
+		}
+	}
+</script>
+
+<style>
+
+</style>

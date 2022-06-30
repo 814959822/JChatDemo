@@ -1,0 +1,166 @@
+<template>
+	<view class="page" >
+		<!-- 导航栏 -->
+		<free-nav-bar title='从全部标签中添加' showBack>
+			<view  slot='right'>
+				<free-main-button :disabled="listload" @click='save' name="保存"></free-main-button>
+			</view>
+			
+		</free-nav-bar>
+
+		<view style="min-height: 122rpx;box-sizing: border-box;" class="px-3 py-1 flex align-center bg-white flex-wrap">
+			<block v-for="(item,index) in list" :key='index'>
+				<view  v-if="!item.isDelTag" @click="delTag(item)"
+					class="my-2 main-bg-rgba-color rounded-circle mr-2 py-1 px-2 flex align-center justify-center">
+					<text class="font main-text-color">{{item.name}}</text>
+				</view>
+				<view v-if="item.isDelTag"  @click="yesdelTag(item,index)" class="my-2 main-bg-color rounded-2 mr-2 py-1 px-2 flex align-center justify-center">
+					<text class="font text-white">{{item.name}}X</text>
+				</view>
+			</block>
+			<input confirm-type="send" v-model="tag"  @confirm="addTag" style=" width: 240rpx;"
+				class=" my-2  ml-2  text-center font" placeholder="选择或搜索标签" />
+
+		</view>
+		<!-- 搜有标签 -->
+		<view  class="flex flex-column">
+			<text class="font-sm text-secondary px-3 py-2">全部标签</text>
+			<view class="flex flex-wrap align-center pb-2 px-3">
+				<block v-for="(item,index) in allList" :key='index'>
+					<view @click="fastAddTag(item)" :class="item.isFastTag?`main-bg-rgba-color `:`bg-white `"
+						class="py-1 px-2 rounded-circle mb-1 mr-2">
+						<text :class="item.isFastTag?`main-text-color `:`text-secondary `"
+							class="font ">{{item.name}}</text>
+					</view>
+				</block>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				listload:true,
+				list: [],
+				tag: '',
+				allList: [],
+				id:''
+			}
+		},
+		onLoad(e) {
+			if (e.detail) {
+				this.list = JSON.parse(e.detail)
+				// console.log(e)
+				this.list=this.list.map(item=>{
+					return{
+						name:item,
+						isDelTag : false,
+						isFastTag: false,
+					}
+					
+				})
+			}
+			if(e.id){
+				this.id=e.id
+				$H.get('/tag/list').then(res => {
+					this.allList=res.map(item=>{
+						return{
+							...item,
+							isFastTag:JSON.parse(e.detail).indexOf(item.name)!==-1,
+							isDelTag: false
+						}
+					}) 
+					// console.log(this.allList);
+				})
+			}
+		},
+		components: {
+			freeNavBar,
+			freeMainButton
+		},
+		methods: {
+			// 保存
+			save(){
+				let taglist = []
+				this.list.forEach(item=>{
+					return taglist.push(item.name)
+					
+				})
+				uni.$emit("updateTag",taglist)
+				uni.navigateBack({
+					delta:1
+				})
+			},
+			// 添加
+			addTag() {
+				if (this.list.indexOf(this.tag) !== -1) {
+					this.tag=''
+					return
+				}
+				let tagData = {
+					name: this.tag,
+					isFastTag: false,
+					isDelTag: false
+				}
+				if (this.tag === '') {
+					return
+				}
+				this.listload=false
+				this.list.push(tagData)
+				this.tag = ''
+			},
+			// 快速添加
+			fastAddTag(item) {
+				// console.log(item)
+
+				let isFastTag = item.isFastTag
+				item.isFastTag = !isFastTag
+				
+				item.isDelTag=false
+				let tag = this.list.map(item=>item.name)
+				let tagIndex = tag.indexOf(item.name)
+				// console.log(tag,item.name,tagIndex);
+				this.listload=false
+				if (tagIndex !== -1) {
+					this.list.splice(tagIndex, 1)
+					return
+				} 
+					this.list.push(item)
+					
+
+			},
+			// 是否删除
+			delTag(item) {
+				this.list.forEach(item=>{
+					item.isDelTag = false
+				})
+				
+				item.isDelTag = true
+			},
+			// 确认删除
+			yesdelTag(item,index) {
+				this.list.splice(index, 1)
+				item.isFastTag = false
+				let tag = this.list.map(item=>item.name)
+				this.listload=false
+				this.allList=this.allList.map(item=>{
+					return{
+						...item,
+						isFastTag:tag.includes(item.name),
+						isDelTag : false
+					}
+				}) 
+			}
+			
+		}
+	}
+</script>
+
+<style>
+
+</style>

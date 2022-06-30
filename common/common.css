@@ -1,0 +1,37 @@
+ /* 定义背景色 */
+.page{
+	background-color: #ededed;
+	/* #ifndef APP-PLUS-NVUE */
+	min-height: 100vh;
+	height: auto;
+	/* #endif */
+	/* #ifdef APP-PLUS-NVUE */
+	flex: 1;
+	/* #endif */
+}
+/* 主背景色 绿*/
+.main-bg-color{
+	background-color:#06bd5d ;
+}
+.bg-chat{
+	background-color: #f7f7f7;
+}
+.main-bg-rgba-color{
+	background-color:rgba(6,189,93,0.1);
+}
+.border-main{
+	border-color: #06BD5D!important;
+}
+/* 主文字色 绿*/
+.main-text-color{
+	color: #06bd5d;
+}
+.bg-chat-item{
+	background-color:#99eb6b ;
+}
+.bg-main-rgba{
+	background-color:rgba(6, 189, 93, 0.5) ;
+}
+.text-chat-item{
+	color: #99eb6b;
+}

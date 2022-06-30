@@ -1,0 +1,190 @@
+<template>
+	<view>
+		<free-transparent-bar  :isShowRight='false' title="朋友圈" :scrollTop='scrollTop'></free-transparent-bar>
+	
+		<view class="position-relative" style="height: 640rpx;">
+			<image src="/static/images/bgmoment.jpg" mode="aspectFill" class="bg-chat w-100"
+				style="height: 595rpx;"></image>
+			<image :src="avatar" style="width:120rpx ;height: 120rpx;right: 30rpx;"
+				class="bg-secondary rounded position-absolute bottom-0" mode=""></image>
+			<text class="font-md text-white position-absolute" style="bottom: 60rpx;right: 160rpx;">{{nickname}}</text>
+		</view>
+		<view style="height: 120rpx;">
+
+		</view>
+		<!-- 朋友圈列表样式 -->
+		<free-mymoment-list v-for="(item,index) in list" :key='index' :index="index" :item="item" :time='oldtime(index)'
+			@reply='replyEvent'>
+		</free-mymoment-list>
+		<!-- 评论框 -->
+
+		<!-- 上拉加载  -->
+		<view v-if="list.length>=10" class="flex align-center justify-center bg-white py-4">
+			<text class="text-light-muted font-small">{{loadmore}}</text>
+		</view>
+	</view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeMymomentList from "@/components/free-ui/free-mymoment-list.vue"
+	import freeMomentList from "@/components/free-ui/free-moment-list.vue"
+	import freeTransparentBar from "@/components/free-ui/free-transparent-bar.vue"
+	export default {
+		data() {
+			return {
+				content: '',
+				scrollTop: 0,
+				list: [],
+				faceList: ["😀", "😁", "😂", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗",
+					"😙", "😚", "😇", "😐", "😑", "😶", "😏", "😣", "😥", "😮", "😯", "😪", "😫", "😴",
+					"😌", "😛", "😜", "😝", "😒", "😓", "😔", "😕", "😲", "😷", "😖", "😞", "😟", "😤",
+					"😢", "😭", "😦", "😧", "😨", "😬", "😰", "😱", "😳", "😵", "😡", "😠"
+				],
+
+				page: 1,
+				loadmore: "上拉加载更多",
+				key: "moment_timeline",
+				reply_user: false,
+				show: false,
+				params: false
+			}
+		},
+		onPageScroll(e) {
+			this.scrollTop = e.scrollTop
+		},
+		components: {
+			freeTransparentBar,
+			freeMomentList,
+			freeMymomentList
+		},
+		onShow() {
+			this.getData()
+		},
+		onLoad(e) {
+			if (e.key) {
+				this.key = e.key
+			}
+			if (e.params) {
+				this.params = JSON.parse(decodeURIComponent(e.params))
+			}
+			this.page = 1
+			uni.$on('momentNotice', this.momentNotice)
+		},
+		destroyed() {
+			uni.$off('momentNotice', this.momentNotice)
+		},
+		//下拉刷新
+		onPullDownRefresh() {
+			this.page = 1
+			this.getData().then(res => {
+				uni.showToast({
+					title: "刷新成功",
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			}).catch(err => {
+				uni.showToast({
+					title: '刷新失败',
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			})
+		},
+		// 上拉加载
+		onReachBottom() {
+			if (this.loadmore !== '上拉加载更多') {
+				return
+			}
+			this.page += 1
+			this.loadmore = '加载中...'
+			this.getData().catch(err => {
+				this.page -= 1
+				uni.showToast({
+					title: '加载失败',
+					icon: 'none'
+				})
+				this.loadmore = '上拉加载更多'
+			})
+		},
+		mounted() {
+			// 监听键盘高度
+			uni.onKeyboardHeightChange(res => {
+				this.KeyHeight = res.height
+				if (this.KeyboardHeight === 0) {
+					this.KeyboardHeight = res.height
+				}
+			})
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user
+			}),
+			nickname() {
+				if (!this.params) {
+					return this.user.nickname || this.user.username
+				}
+				return this.params.name
+			},
+			avatar() {
+				let avatar = ''
+				avatar = !this.params ? this.user.avatar : this.params.avatar
+
+				return avatar = avatar || '/static/images/userpic.png'
+			},
+			getKeyboardHeight() {
+				// #ifdef APP-PLUS-NVUE
+				return this.KeyboardHeight ? `height:${this.KeyboardHeight}px;` : 'height:350rpx;'
+				// #endif
+				// #ifdef H5
+				if (this.faceModal) {
+					return 'height:350rpx;'
+				}
+				// #endif
+				return
+			}
+		},
+		methods: {
+			momentNotice() {
+				this.getData()
+			},
+			oldtime(index) {
+				if(index===0){
+					return false
+				}
+				return this.list[index - 1].created_at
+			},
+			getData() {
+
+				return new Promise((result, reject) => {
+					let page = this.page
+					let param = ''
+					if (this.params && this.key == 'moment') {
+						param = '?user_id=' + this.params.id
+					}
+					$H.get(`/${this.key}/${this.page}${param}`).then(res => {
+						let page = this.page
+						this.list = page === 1 ? res : [...this.list, ...res]
+						this.loadmore = this.list.length === (page * 10) ? '上拉加载更多' :
+							'——没有更多了——'
+					}).then(res => {
+
+						result(res)
+					}).catch(err => {
+
+						reject(err)
+					})
+				})
+			},
+
+		}
+	}
+</script>
+
+<style>
+
+</style>

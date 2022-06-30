@@ -1,0 +1,221 @@
+<template>
+	<view class="px-3">
+		<!-- 导航栏 -->
+		<free-nav-bar :showRight="true" bgColor="bg-white" showBack>
+			<view slot='right'>
+				<free-main-button @click='submit' name="发表"></free-main-button>
+			</view>
+
+		</free-nav-bar>
+		<view class="">
+			<!-- 文字 -->
+			<textarea placeholder="这一刻的想法.." class="p-3 font-md mb-3" v-model="content"></textarea>
+			<!-- 图文 -->
+			<free-upload-image :data='imageList' v-if="type==='image'" @updata='updataImage'></free-upload-image>
+			<!-- 视频 -->
+			<view v-if="type==='video'&&!video" style="height:350rpx;"
+				class="flex align-center justify-center bg-light rounded" hover-stay-time='50' hover-start-time='0'
+				hover-class="bg-hover-light" @click="uploadVideo">
+				<text style="font-size: 100rpx;" class="text-muted">+</text>
+			</view>
+			<video :poster="video.poster" controls v-if="type==='video'&&video&&video.src" :src="video.src"></video>
+			<view v-if="type==='video'&&video&&video.src" @click="uploadVideo"
+				class="my-3 flex align-center justify-center bg-light rounded-2" hover-stay-time='50'
+				hover-start-time='0' hover-class="bg-hover-light" style="height: 100rpx;">
+				<text class="font-md text-muted">点击切换视频</text>
+			</view>
+
+			<view class="mr-2 ml-1">
+				<free-liat-item boxStyle='height:110rpx;'  textClassP='py-3 ' title="所在位置"
+					showRight>
+					<text slot='icon' class='iconfont font-lg'>&#xe632;</text>
+				</free-liat-item>
+				<free-liat-item @click='openRemind' boxStyle='height:110rpx;' 
+					:textClassP='remindColor' title="提醒谁看" showRight>
+					<text slot='icon' :class='remindColor' class='iconfont font-lg'>&#xe61c;</text>
+					<view class="flex" slot='right'>
+						<view class="ml-1" v-for="(item,index) in remindList" :key="index">
+							<free-avater :src='item.avatar' size="50"></free-avater>
+						</view>
+					</view>
+				</free-liat-item>
+
+				<free-liat-item @click='openSee' boxStyle='height:110rpx;' :textClassP='seeTextColor' :title="seeTitle"
+					showRight>						<text slot='icon' :class="seeTextColor" class='iconfont font-lg'>&#xe633;</text>						<view slot="right">
+						<text style="max-width: 360rpx;" class="text-ellipsis font "
+							:class="seeTextColor">{{seeText}}</text>
+						</view>
+				</free-liat-item>
+
+
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeUploadImage from "@/components/free-ui/free-upload-image.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				content: '',
+				type: '',
+				imageList: [],
+				video: false,
+				remindList: [],
+				seeObject: {
+					k: 'all',
+					v: ""
+				}
+			}
+		},
+		components: {
+			freeNavBar,
+			freeMainButton,
+			freeLiatItem,
+			freeUploadImage,
+			freeAvater
+		},
+		computed: {
+			// 提醒谁选中颜色
+			remindColor() {
+				let textcolor = this.remindList.length ? 'main-text-color' : ''
+				return `${textcolor} py-3`
+			},
+			seeText() {
+				let type = {
+					all: '公开',
+					none: "私密",
+					only: "谁可以看",
+					except: "谁不可看"
+				}
+				if (this.seeObject.k === 'all' || this.seeObject.k === 'none') {
+					return type[this.seeObject.k]
+				}
+				let names = (this.seeObject.v.map(item => item.name)).join(',')
+				return `${names}`
+			},
+			seeTitle() {
+				if (this.seeObject.k === 'none' || this.seeObject.k === 'except') {
+					return '谁不可看'
+				} else {
+					return '谁可以看'
+				}
+			},
+			seeTextColor() {
+				if (this.seeObject.k === 'only' || this.seeObject.k === 'none') {
+					return 'main-text-color py-3 '
+				}
+				if (this.seeObject.k === 'except') {
+					return 'text-danger py-3'
+				}
+				return 'py-3'
+			},
+			seeData() {
+				if (this.seeObject.k === 'all' || this.seeObject === 'none') {
+					return this.seeObject.k
+				}
+				let ids = (this.seeObject.v.map(item => item.user_id)).join(',')
+				return `${this.seeObject.k}:${ids}`
+			},
+
+		},
+		onLoad(e) {
+			this.type = e.type
+			uni.$on('sendResult', this.sendResult)
+		},
+		destroyed() {
+			uni.$off('sendResult', this.sendResult)
+		},
+		methods: {
+			sendResult(e) {
+				if (e.type === 'remind') {
+					this.remindList = e.data
+				}
+				if (e.type === 'see') {
+					// console.log(e.data);
+					this.seeObject = e.data
+					if (e.data.k === 'none' && this.remindList.length !== 0) {
+						this.remindList = []
+						return uni.showModal({
+							title: "提示",
+							content: "谁可以看选择私密时，不支持@人",
+							showCancel: false,
+						})
+					}
+				}
+			},
+			openRemind() {
+				if (this.seeObject.k === 'none' && this.remindList.length !== 0) {
+					return uni.showModal({
+						title: "提示",
+						content: "谁可以看选择私密时，不支持@人",
+						showCancel: false,
+					})
+					// console.log('111');
+				}
+				uni.navigateTo({
+					url: '../../mail/mail/mail?type=remind',
+				});
+			},
+			openSee() {
+				uni.navigateTo({
+					url: '../../mail/mail/mail?type=see'
+				})
+			},
+			// 发送
+			submit() {
+				$H.post('/moment/create', {
+					content: this.content,
+					image: this.imageList.join(','),
+					video: this.video ? JSON.stringify(this.video) : '',
+					type: this.type,
+					location: "",
+					remind: (this.remindList.map(item => item.user_id)).join(','),
+					see: this.seeData
+				}).then(res => {
+					uni.showToast({
+						title: '发布成功',
+						icon: 'none'
+					})
+					uni.navigateBack({
+						delta: 1
+					})
+				})
+			},
+			// 上传图片
+			updataImage(list) {
+				this.imageList = list
+			},
+			// 上传视频
+			uploadVideo() {
+				uni.chooseVideo({
+					maxDuration: 30,
+					success: (e) => {
+						// this.video=e.tempFilePath
+						$H.upload('/upload', {
+							filePath: e.tempFilePath
+						}, (progress) => {
+							// console.log('上传进度', progress);
+						}).then(url => {
+							this.video = {
+								src: url,
+								poster: url +
+									'?x-oss-process=video/snapshot,t_10,m_fast,w_300,f_png'
+							}
+						})
+					}
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

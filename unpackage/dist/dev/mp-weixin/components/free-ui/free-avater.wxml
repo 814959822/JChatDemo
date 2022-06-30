@@ -1,0 +1,1 @@
+<image class="{{[type]}}" style="{{(getStyle)}}" src="{{src?src:avatar}}" mode="aspectFill" data-event-opts="{{[['tap',[['clickEvent',['$event']]]]]}}" bindtap="__e"></image>

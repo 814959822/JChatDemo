@@ -1,0 +1,1 @@
+<image class="{{[imageClass]}}" style="{{(imageStyle)}}" src="{{src}}" mode="aspectFill" lazy-load="{{true}}" data-event-opts="{{[['tap',[['$emit',['click']]]],['longpress',[['$emit',['@longpress']]]],['load',[['loadImage',['$event']]]]]}}" bindtap="__e" bindlongpress="__e" bindload="__e"></image>

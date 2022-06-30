@@ -1,0 +1,71 @@
+<template>
+	<view class="page flex align-center justify-center flex-1">
+		<!-- 导航栏 -->
+		<free-nav-bar :showRight='false' showBack title="二维码名片">
+		</free-nav-bar>
+		<view>
+			<view class="bg-white rounded-2 p-3">
+				<view class="flex align-center mb-3">
+					<free-avater size='120' :src="detail.avatar||avatar"></free-avater>
+					<view style="height: 120rpx;" class="pl-2 flex justify-center flex-column">
+						<text class="font-md pb-1">{{detail.name}}</text>
+						<text class="font text-light-muted">地区</text>
+					</view>
+				</view>
+				<view class="flex flex-column align-center justify-around">
+					<img :src="src" style="width: 600rpx;height: 600rpx;" class="bg-light mb-3" alt="">
+					<text class="font text-light-muted">扫一扫上面的二维码图案，加{{type==='user'?'我微信':'入群聊'}}</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import $C from "@/common/free-lib/config.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	import {
+		mapState
+	} from "vuex"
+	export default {
+		data() {
+			return {
+				detail: {
+					id: 0,
+					name: "",
+					avatar: ""
+				},
+				src: "",
+				type:'user'
+			}
+		},
+		components: {
+			freeNavBar,
+			freeAvater
+		},
+		onLoad(e) {
+			if (e.params) {
+				this.type=e.type
+				this.detail = JSON.parse(decodeURIComponent(e.params))
+				this.src = `${$C.codeUrl}/${e.type}_qrcode/${this.detail.id}?token=${this.user.token}`
+			}
+
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user
+			}),
+			avatar(){
+				return this.type==='user'?'/static/images/userpic.png':'/static/images/groupavatar.png'
+			}
+		},
+		methods: {
+
+		}
+	}
+</script>
+
+<style>
+
+</style>

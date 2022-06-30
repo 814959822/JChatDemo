@@ -1,0 +1,188 @@
+<template>
+	<view>
+		<free-nav-bar :showNavbar='isNavBar' title='选择' :showRight='false' showBack>
+			<!-- <view v-if="!selectCount" slot='right' @click='handleNavBarBtn' class=" mr-2 px-3  rounded"
+				style="padding-top: 15rpx;padding-bottom: 15rpx; ">
+				<text class="font text-dark">{{muliSelect?'单选':'多选'}}</text>
+			</view>
+			<free-main-button v-else-if="selectCount" slot='right' :name="'发送('+selectCount+')'"></free-main-button> -->
+			<!-- 搜索框 -->
+			<view slot='bottom' class="px-3 py-2 flex  bg-light" style="z-index:10;">
+				<view class="bg-white flex-row flex flex-1 rounded">
+					<view v-if="!isNavBar" style="height: 60rpx;width: 60rpx;" class="flex align-center justify-center">
+						<text class="iconfont font">&#xe61e;</text>
+					</view>
+
+					<input :placeholder-style="isNavBar?'text-align: center;':'text-align:start' " @focus='focus'
+						 type="text" style="height: 60rpx;width:100rpx" v-model="keyword" placeholder="搜索"
+						class="font flex-1 px-2" value="" />
+				</view>
+				<!-- 取消 -->
+				<view v-if="!isNavBar" @click='blur' class="pl-3 pr-1  flex align-center justify-center rounded"
+					style="height: 60rpx;">
+					<text class="font text-hover-primary">取消</text>
+				</view>
+
+			</view>
+			<view slot='maskBottom' class="">
+				<!-- 蒙版 -->
+				<view @click="blur" v-if="(!isNavBar&&!keyword)" :style="'top:'+navBarHeight+'px;'"
+					class="position-fixed left-0 right-0 bottom-0" style="background-color:rgba(0,0,0,.5);">
+				</view>
+			</view>
+		</free-nav-bar>
+
+		<view :style="isNavBar?'height: 100rpx;':'height: 10rpx;'">
+
+		</view>
+
+
+		<!-- 搜索/联系人 -->
+		<view class="px-2 py-1  bg-light">
+			<text class="font-sm text-muted">最近聊天</text>
+		</view>
+		<free-liat-item @click='selectItem(item)' v-for="(item,index) in allList" :key='index' :title='item.name'
+			:cover='item.avatar||"/static/images/userpic.png"'>
+			<view v-if="muliSelect" slot='icon'
+				style="border-width: 3rpx; width: 45rpx;height: 45rpx;margin-right: 30rpx;"
+				class="border flex align-center justify-center border-secondary rounded-circle">
+				<view v-if="item.checked" class="main-bg-color flex align-center justify-center  rounded-circle"
+					style="width: 45rpx; height: 45rpx;">
+					<text class="font-sm text-white text-center">✓</text>
+				</view>
+			</view>
+		</free-liat-item>
+
+		<view v-if="keyword!==''&&searchList.length===0" class="flex align-center justify-center"
+			style="height: 100rpx;">
+			<text class="font text-light-muted">暂无搜索结果</text>
+		</view>
+
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				isNavBar: true,
+				muliSelect: false,
+				keyword: '',
+				list: [],
+				statusBarHeight: 0,
+				navBarHeight: 0,
+				group_id:0
+			}
+		},
+		components: {
+			freeNavBar,
+			freeMainButton,
+			freeLiatItem,
+			freeAvater
+		},
+		onLoad(e) {
+			// #ifdef APP-PLUS-NVUE
+			this.statusBarHeight = plus.navigator.getStatusbarHeight()
+			// #endif
+			this.navBarHeight = this.statusBarHeight + uni.upx2px(100)
+
+			if(e.id){
+				this.group_id=e.id
+				$H.get('/group_info/' + e.id).then(res => {
+					this.list = res.group_users.map(item => {
+						return {
+							id: item.user_id,
+							name: item.nickname || item.user.nickname || item.user.username,
+							avatar: item.user.avatar
+						}
+					})
+					
+				}).catch(err => {
+					// console.log(err);
+					uni.navigateBack({
+						delta: 1
+					})
+				})
+			}
+			
+		},
+		computed: {
+			// // 选中列表
+			// selectList() {
+			// 	return this.list.filter(item => item.checked)
+			// },
+			// // 选中数量
+			// selectCount() {
+			// 	return this.selectList.length
+			// },
+			// 搜索结果列表
+			searchList() {
+				if (this.keyword === '') {
+					return []
+				}
+				return this.list.filter(item => {
+					return item.name.indexOf(this.keyword) !== -1
+				})
+			},
+			// 最终列表
+			allList() {
+				return this.keyword === '' ?
+					this.list : this.searchList
+			}
+		},
+		methods: {
+			// 点击导航栏按钮事件
+			handleNavBarBtn() {
+				this.muliSelect = !this.muliSelect
+
+			},
+			// 选中或取消
+			selectItem(item) {
+				// if (this.muliSelect) {
+				// 	return item.checked = !item.checked
+				// }
+				// 发送
+				uni.showModal({
+					content:'是否要踢出该成员？',
+					success: (res) => {
+						if (res.confirm) {
+							$H.post('/group/kickoff',{
+								id:this.group_id,
+								user_id:item.id
+							}).then(res=>{
+								uni.showToast({
+									title:'踢出成功',
+									icon:'none'
+								})
+								uni.navigateBack({
+									delta:1
+								})
+							})
+						}
+					}
+				})
+			},
+			focus() {
+				if (this.isNavBar) {
+					this.isNavBar = false
+				}
+			},
+			blur() {
+				if (!this.isNavBar) {
+					this.keyword=''
+					this.isNavBar = true
+					uni.hideKeyboard()
+				}
+			},
+		}
+	}
+</script>
+
+<style>
+
+</style>

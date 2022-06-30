@@ -1,0 +1,178 @@
+<template>
+	<view>
+		<!-- 导航栏 -->
+		<free-nav-bar title="通讯录"></free-nav-bar>
+		<view v-if="!show"
+			class="position-fixed top-0 bottom-0 left-0 right-0 bg-light flex justify-center align-center">
+			<text class="text-muted font">正在加载...</text>
+		</view>
+
+		<scroll-view scroll-y="true" :scroll-into-view="scrollInto" :style="'height:'+sccollHeight+'px;'"
+			show-scrollbar='false'>
+
+			<!-- 通讯录列表 -->
+			<free-liat-item coverSize='80' @click='navigate(item.path)' v-for="(item,index) in toplist" :key='item.id'
+				:showRight="item.id==='friend'&&applyCount>0" :title='item.title' :cover='item.cover'>
+				<view slot='right'>
+					<freeBadge v-if="applyCount>0" :value="applyCount"></freeBadge>
+				</view>
+
+			</free-liat-item>
+
+			<view v-for="(item,index) in list" :id="'item-'+item.title" :key='index' class="">
+				<view v-if="item.list.length">
+					<view class="py-15 px-3 bg-light border-bottom">
+						<text class="font-sm text-dark">{{item.title}}</text>
+					</view>
+					<free-liat-item coverSize='80' @click="navigate('mail/user-base/user-base?user_id='+item2.user_id)"
+						v-for="(item2,index2) in item.list" :key='index2' :title="item2.name"
+						:cover="item2.avatar?item2.avatar:'/static/images/userpic.png'"></free-liat-item>
+				</view>
+			</view>
+		</scroll-view>
+
+		<!-- 侧边导航 -->
+		<view @touchstart="touchstart" @touchmove="touchmove" @touchend="touchend"
+			class="position-fixed flex flex-column  right-0 bottom-0"
+			style="width: 50rpx;margin-top: 200rpx;margin-bottom: 200rpx;" :style="'top:'+top+'px;'">
+			<view v-for="(item,index) in list" :key="index" class="flex-1 flex align-center justify-center">
+
+				<text :class="item.title!==current||'main-bg-color rounded-2 text-white'"
+					style="width: 24rpx;font-size: 22rpx;" class="text-center">{{item.title}}</text>
+			</view>
+		</view>
+		<view v-if="current" style="right: 70rpx;width: 120rpx;height: 100rpx;" :style="'top:'+Y+'px;'"
+			class="position-fixed flex align-center">
+
+
+			<view class=" bg-light-dark flex align-center justify-center rounded-circle"
+				style=" width: 100rpx;height: 100rpx;">
+
+				<text style="font-size: 60rpx;" class="text-white">{{current}}</text>
+			</view>
+			<text style="left: 60rpx;font-size: 80rpx;"
+				class="position-absolute text-light-dark iconfont">&#xec1d;</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import freeBadge from "@/components/free-ui/free-badge.vue"
+	import auth from "@/common/mixin/auth.js"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		mixins: [auth],
+		components: {
+			freeNavBar,
+			freeLiatItem,
+			freeBadge
+		},
+		data() {
+			return {
+				toplist: [{
+						id: 'friend',
+						title: '新的朋友',
+						cover: '/static/images/mail/friend.png',
+						path: 'mail/apply-list/apply-list'
+					},
+					{
+						id: 'group',
+						title: '群聊',
+						cover: '/static/images/mail/group.png',
+						path: 'mail/group-list/group-list'
+					},
+					{
+						id: 'tag',
+						title: '标签',
+						cover: '/static/images/mail/tag.png',
+						path: 'mail/tag-list/tag-list'
+					},
+					// {
+					// 	title:'公众号',
+					// 	cover:'',
+					// 	event:''
+					// },
+				],
+				srcollHeight: 0,
+				sccollHeight: 0,
+				top: 0,
+				scrollInto: '',
+				current: '',
+				Y: 0,
+				show: false,
+			}
+		},
+		onLoad() {
+			let res = uni.getSystemInfoSync()
+			this.top = res.statusBarHeight + uni.upx2px(90)
+			this.srcollHeight = res.windowHeight - this.top - uni.upx2px(400)
+			this.sccollHeight = res.windowHeight - this.top
+			this.$store.dispatch('getMailList')
+			this.show=true
+
+		},
+		computed: {
+			...mapState({
+				applyCount: state => state.user.apply.count,
+				list: state => state.user.mailList
+			}),
+			modalTop() {
+				return (this.srcollHeight - uni.upx2px(150)) / 2
+			},
+			// 每个索引高度
+			itemHeight() {
+				let count = this.list.length
+				if (count < 1) {
+					return 0
+				}
+				return this.srcollHeight / count
+			}
+		},
+		methods: {
+
+			touchstart(e) {
+				this.changeScrollInto(e)
+			},
+			touchmove(e) {
+				this.changeScrollInto(e)
+			},
+			touchend(e) {
+				this.current = ''
+			},
+			changeScrollInto(e) {
+
+				let Y = e.touches[0].pageY
+
+				// #ifdef MP
+				Y = Y - this.top
+				// #endif
+
+				let res = uni.getSystemInfoSync()
+				let YY = Y + uni.upx2px(290)
+				if (YY <= uni.upx2px(390)) {
+					YY = uni.upx2px(390)
+				} else if ((res.windowHeight - YY) <= uni.upx2px(300)) {
+					YY = res.windowHeight - uni.upx2px(300)
+				}
+				this.Y = YY
+
+				let index = Math.floor(Y / this.itemHeight)
+				let item = this.list[index]
+
+				if (item) {
+					this.scrollInto = 'item-' + item.title
+					this.current = item.title
+				}
+
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

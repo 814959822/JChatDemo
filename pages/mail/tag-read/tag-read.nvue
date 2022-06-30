@@ -1,0 +1,151 @@
+<template>
+	<view class="page">
+		<free-nav-bar title='编辑标签' :showRight='true' showBack>
+			<view slot='right'>
+				<free-main-button name="保存" @click='submit'></free-main-button>
+				</free-icon-button>
+			</view>
+
+
+		</free-nav-bar>
+		<scroll-view :show-scrollbar='false' scroll-y="true">
+			<view class="px-2 pb-1 pt-4 bg-light">
+				<text class="font-sm text-muted">标签名字</text>
+			</view>
+			<input style="height: 105rpx;box-sizing: border-box;" class="bg-white p-2" type="text"
+				:placeholder="tagName">
+			<!--联系人 -->
+			<view class="px-2 pb-1 pt-4  bg-light">
+				<text class="font-sm text-muted">成员</text>
+			</view>
+			<!-- 人 -->
+			<view class="pt-2 bg-white flex flex-wrap">
+				<view v-if="list.length" v-for="(item,index) in list" :key="index"
+					class="flex flex-column align-center justify-center my-2" style="width: 150rpx;">
+					<free-avater :size="100" :src='item.avatar||"/static/images/userpic.png"'></free-avater>
+					<text style="max-width: 100rpx;"
+						class="text-ellipsis font-small mt-1 text-light-muted">{{item.name}}</text>
+				</view>
+				<!-- + -->
+				<view class="flex flex-column align-center justify-start my-2" style="width: 150rpx;">
+					<view hover-stay-time='50' hover-start-time='0' hover-class="bg-hover-light"
+						class="mb-3 rounded flex align-center justify-center"
+						style="width: 110rpx;height: 110rpx;border-color:#A9A5A0 ; border-style:dashed;border-width: 3rpx;">
+						<text class="text-light-muted"
+							style="font-size: 90rpx ; line-height: 90rpx;font-weight: 100;">+</text>
+
+					</view>
+				</view>
+
+				<!-- - -->
+				<view class="flex flex-column align-center justify-start my-2" style="width: 150rpx;">
+					<view hover-stay-time='50' hover-start-time='0' hover-class="bg-hover-light"
+						class="mb-3 rounded flex align-center justify-center"
+						style="width: 110rpx;height: 110rpx;border-color:#A9A5A0 ; border-style:dashed;border-width: 3rpx;">
+						<text class="text-light-muted"
+							style="font-size: 90rpx ; line-height: 90rpx;font-weight: 100;">-</text>
+
+					</view>
+				</view>
+			</view>
+			<view style="height: 80rpx;">
+
+			</view>
+			<view style="height:90rpx;" class="mx-2 flex justify-center align-center bg-danger rounded">
+				<text class="font-md text-white">删除标签</text>
+			</view>
+		</scroll-view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeIconButton from "@/components/free-ui/free-icon-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				list: [],
+				id: 0,
+				tagName: ''
+			}
+		},
+		components: {
+			freeNavBar,
+			freeIconButton,
+			freeAvater,
+			freeMainButton
+		},
+		onLoad(e) {
+			this.id = e.id
+			this.tagName = e.name
+			if (!e.friends) {
+				return
+			}
+			this.gatData()
+		},
+		computed: {
+
+		},
+
+		onShow() {},
+		// 下啦刷新
+		onPullDownRefresh() {
+
+			this.gatData().then(res => {
+				uni.showToast({
+					title: "刷新成功",
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			}).catch(err => {
+				// console.log('12');
+			})
+
+		},
+		methods: {
+			gatData() {
+				return new Promise((result, reject) => {
+					$H.get('/tag/read/' + this.id).then(res => {
+						// console.log(res)
+
+						this.list = res.map(item => {
+							return {
+								id: item.friendInfo.id,
+								name: item.nickname || item.friendInfo.nickname || item.friendInfo
+									.username,
+								avatar: item.friendInfo.avatar
+							}
+						})
+						result(res)
+					}).catch(err => {
+						return
+					})
+				})
+			},
+			submit() {
+				// $H.post('/friend/setremarktag/'+14,{
+				// 	nickname:'',
+				// 	tags:this.tagName
+				// }).then(res=>{
+				// 	uni.showToast({
+				// 		title:'修改成功',
+				// 		icon:'none'
+				// 	})
+				// 	uni.navigateBack({
+				// 		delta: 1
+				// 	})
+				// })
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

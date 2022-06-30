@@ -1,0 +1,45 @@
+<template>
+	<view class="page">
+		<!-- 导航栏 -->
+		<free-nav-bar :showRight='false' showBack title="我的设置">
+		</free-nav-bar>
+		<!-- 推出登录按钮 -->
+		<free-divider></free-divider>
+		<view @click="logout"  hover-stay-time='50'  hover-start-time='0' hover-class="bg-hover-light" style="height: 110rpx;border-color: #ededed ;"
+			class="border-bottom  bg-white flex align-center justify-center ">
+			<text style="font-weight: 600;" class="font text-dark">推出登陆</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import freeDivider from "@/components/free-ui/free-divider.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+
+			}
+		},
+		components: {
+			freeNavBar,
+			freeDivider,
+		},
+		methods: {
+			logout(){
+				$H.post('/logout').then(res=>{
+					uni.showToast({
+						title:'退出登陆成功',
+						icon:'none'
+					})
+					this.$store.dispatch('logout')
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

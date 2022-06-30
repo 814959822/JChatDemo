@@ -1,0 +1,1 @@
+<view data-event-opts="{{[['tap',[['clickEvent',['$event']]]]]}}" class="{{['mr-2','px-3','rounded',disabled?'bg-secondary':'main-bg-color']}}" style="padding-top:15rpx;padding-bottom:15rpx;white-space:nowrap;" bindtap="__e"><text class="{{['font',disabled?'text-secondary':'text-white']}}">{{name}}</text></view>

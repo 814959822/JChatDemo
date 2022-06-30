@@ -1,0 +1,120 @@
+<template>
+	<view class="page">
+		<!-- 导航栏 -->
+		<free-nav-bar :showRight='false' showBack title="个人信息">
+		</free-nav-bar>
+
+		<free-liat-item @click='update("avatar")' boxStyle='height:110rpx;' :showLeftIcon='false'
+			textClassP='py-3  ml-3' title="头像" showRight>
+			<view slot='right'>
+				<free-avater  size="80" :src='user.avatar'></free-avater>
+			</view>
+			
+		</free-liat-item>
+		<free-liat-item @click='update("nickname")' boxStyle='height:110rpx;' :showLeftIcon='false'
+			textClassP='py-3  ml-3' title="昵称" showRight>
+			<text class="font text-muted" slot='right'>{{user.nickname}}</text>
+		</free-liat-item>
+		<free-liat-item boxStyle='height:110rpx;' :showLeftIcon='false'
+			textClassP='py-3  ml-3' title="账号" showRight>
+			<text class="font text-muted" slot='right'>{{user.username}}</text>
+		</free-liat-item>
+		<free-liat-item @click='update("code")' boxStyle='height:110rpx;' :showLeftIcon='false' textClassP='py-3  ml-3'
+			title="二维码名片" showRight>
+			<text class="font-md text-muted iconfont" slot='right'>&#xe6bb;</text>
+		</free-liat-item>
+		<free-liat-item boxStyle='height:110rpx;' :showLeftIcon='false' textClassP='py-3  ml-3' title="更多信息" showRight>
+
+		</free-liat-item>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+
+			}
+		},
+		components: {
+			freeNavBar,
+			freeAvater,
+			freeLiatItem
+		},
+		onLoad() {
+			uni.$on("nickname", (e) => {
+				this.user.nickname = e
+			})
+		},
+		beforeDestroy() {
+			uni.$off('nickname')
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user
+			})
+		},
+		methods: {
+			update(key) {
+				switch (key) {
+					case 'avatar':
+						uni.chooseImage({
+							count: 1,
+							sizeType: ['compressed'],
+							sourceType: ['album'],
+							success: (res) => {
+								// 上传
+								$H.upload('/upload', {
+									filePath: res.tempFilePaths[0]
+								}).then(url => {
+									$H.post('/user/update', {
+										avatar: url,
+										nickname: this.user.nickname
+									}).then(res => {
+										uni.showToast({
+											title: '修改头像成功',
+											icon: 'none'
+										});
+										this.$store.commit('updateUser', {
+											k: 'avatar',
+											v: url
+										})
+									})
+								})
+								this.user.avatar = res.tempFilePaths[0]
+							}
+						})
+						break;
+					case 'nickname':
+						uni.navigateTo({
+							url: '../../my/setnickname/setnickname?nickname=' + this.user.nickname
+						})
+						break;
+					
+					case 'code':
+						uni.navigateTo({
+							url: '../code/code?params=' + encodeURIComponent(JSON.stringify({
+								id: this.user.id,
+								name: this.user.nickname || this.user.username,
+								avatar: this.user.avatar,
+							})) + '&type=user'
+						})
+						break;
+					default:
+						break;
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

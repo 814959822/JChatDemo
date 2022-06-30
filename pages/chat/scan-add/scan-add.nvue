@@ -1,0 +1,91 @@
+<template>
+	<view style="height: 100vh;" >
+		<!-- 导航栏 -->
+		<free-nav-bar bgColor='bg-withe' :showRight='false' showBack title="加入群聊">
+		</free-nav-bar>
+		<view >
+			<view class="bg-white py-5 mt-5">
+				<view class="flex flex-column align-center">
+					<free-avater size='120' :src="detail.avatar||'/static/images/groupavatar.png'"></free-avater>
+					<view  class="mt-5  flex justify-start align-center flex-column">
+						<text style="max-width: 400rpx;text-overflow: ellipsis;
+        lines: 2;" class=" font-lg">{{detail.name}}</text>
+						<text class=" font-lg">({{detail.users_count}})</text>
+					</view>
+				</view>
+
+			</view>
+			<view class="flex justify-center position-fixed left-0 right-0" style="bottom: 200rpx;">
+				<view style="height:90rpx;width: 400rpx;" @click="join" class="py-5  mx-2 flex justify-center align-center main-bg-color rounded">
+					<text class="font-md text-white">加入群聊</text>
+				</view>
+			</view>
+			
+		</view>
+	</view>
+</template>
+
+<script>
+	import $C from "@/common/free-lib/config.js"
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	import {
+		mapState
+	} from "vuex"
+	export default {
+		data() {
+			return {
+				detail: {
+					id: 0,
+					name: "",
+					avatar: "",
+					users_count: ''
+				},
+				src: ""
+			}
+		},
+		components: {
+			freeNavBar,
+			freeAvater
+		},
+		onLoad(e) {
+			if (e.params) {
+				this.detail = JSON.parse(decodeURIComponent(e.params))
+
+			}
+
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user,
+				chat: state => state.user.chat,
+			})
+		},
+		methods: {
+			join() {
+				uni.showLoading()
+				$H.post('/group/join',{
+					id:parseInt(this.detail.id)
+				}).then(res=>{
+					uni.hideLoading()
+					let detail = this.chat.getChatListItem(parseInt(this.detail.id), 'group')
+					detail.shownickname = true
+					this.chat.updateChatItem({
+						id: parseInt(this.detail.id),
+						chat_type: 'group',
+					}, detail)
+					uni.navigateBack({
+						delta:1
+					})
+				}).catch(err=>{
+					uni.hideLoading()
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

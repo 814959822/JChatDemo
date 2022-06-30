@@ -1,0 +1,206 @@
+<template>
+	<view class="page">
+		<!-- 导航栏 -->
+		<free-nav-bar title='资料设置' showBack :showRight='false'></free-nav-bar>
+		<view v-if="isfriend">
+			<free-liat-item boxStyle='height:110rpx;' :showLeftIcon='false' textClassP='py-3  ml-3'
+				@click="navigate(toSetTags)" title="设置备注和标签" showRight></free-liat-item>
+			<free-liat-item boxStyle='height:110rpx;' :showLeftIcon='false' textClassP='py-3  ml-3'
+				@click="navigate(tosetmoment)" title="朋友权限" showRight>
+			</free-liat-item>
+			<free-divider></free-divider>
+			<free-liat-item boxStyle='height:110rpx;' :showLeftIcon='false' textClassP='py-3  ml-3'
+				@click="navigate(toChatList)" title="把他(她)推荐给朋友" showRight></free-liat-item>
+			<free-liat-item boxStyle='height:110rpx;' :showLeftIcon='false' textClassP='py-3  ml-3' title="添加到桌面"
+				showRight>
+			</free-liat-item>
+			<free-divider></free-divider>
+			<free-liat-item bghover="bg-white" boxStyle='height:110rpx;' :showRightIcon='false' :showLeftIcon='false'
+				textClassP='py-3  ml-3' title="设为星标朋友" showRight>
+				<switch :disabled='!!detail.isblack' @change="setStar" style="transform:scale(0.8)" color="#06BD5D"
+					slot='right' :checked="!!detail.star" />
+			</free-liat-item>
+		</view>
+		<free-divider></free-divider>
+		<free-liat-item bghover="bg-white" boxStyle='height:110rpx;' :showRightIcon='false' :showLeftIcon='false' textClassP='py-3  ml-3'
+			title="加入黑名单" showRight>
+			<switch @change="setBlack" style="transform:scale(0.8)" color="#06BD5D" slot='right'
+				:checked="!!detail.isblack" />
+		</free-liat-item>
+		<free-liat-item @click="navigate(toreport)" boxStyle='height:110rpx;' :showLeftIcon='false'
+			textClassP='py-3  ml-3' title="投诉" showRight>
+		</free-liat-item>
+		<view v-if="isfriend">
+
+
+			<free-divider></free-divider>
+			<view @click="deleteItem" v-if="isfriend" hover-stay-time='50' hover-start-time='0'
+				hover-class="bg-hover-light" style="height: 110rpx;" class="bg-white flex align-center justify-center ">
+				<text style="font-weight: 600;" class="font text-danger">删除</text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import freeLiatItem from "@/components/free-ui/free-list-item.vue"
+	import freeDivider from "@/components/free-ui/free-divider.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				detail: {
+					area: "",
+					avatar: "",
+					friend: "",
+					id: 0,
+					nickname: "",
+					sex: "",
+					sign: "",
+					username: "",
+					star: 0,
+					lookme: 1,
+					lookhim: 1,
+					tags: [],
+					isblack: 0,
+				},
+				isfriend: false
+			}
+		},
+		components: {
+			freeDivider,
+			freeLiatItem,
+			freeNavBar
+		},
+		onLoad(e) {
+			if (!e.user_id) {
+				return this.backToast()
+			}
+			this.isfriend = e.isfriend
+			this.detail.id = e.user_id
+		},
+		onShow() {
+			// console.log("-----------1")
+			this.getData()
+		},
+		computed: {
+			toChatList() {
+				return 'chat/chat-list/chat-list?params=' + encodeURIComponent(JSON.stringify({
+
+					data: this.detail.nickname || this.detail.username,
+					type: "card",
+					options: {
+						avatar: this.detail.avatar,
+						id: this.detail.id,
+						username: this.detail.username
+					}
+				}))
+			},
+			toSetTags() {
+
+				return 'mail/user-remark-tag/user-remark-tag?params=' + JSON.stringify({
+					user_id: this.detail.id,
+					nickname: this.detail.nickname,
+					tags: this.detail.tags ? this.detail.tags.join(',') : ''
+				})
+			},
+			toreport() {
+				return 'mail/user-report/user-report?params=' + JSON.stringify({
+					user_id: this.detail.id,
+					type: 'user'
+				})
+			},
+			tosetmoment() {
+				return 'mail/user-moments-auth/user-moments-auth?user_id=' + this.detail.id
+			}
+		},
+		methods: {
+			getData() {
+				$H.get('/friend/read/' + this.detail.id).then(res => {
+					if (!res) {
+						return this.backToast('该用户不存在')
+					}
+					this.detail = res
+					// console.log(res)
+				})
+			},
+			navigate(path) {
+				uni.navigateTo({
+					url: "/pages/" + path
+				})
+			},
+			// 设置星标好友
+			setStar() {
+				let star = this.detail.star == 0 ? 1 : 0
+				$H.post('/friend/setstar/' + this.detail.id, {
+					star
+				}).then(res => {
+					this.detail.star = star
+					uni.showToast({
+						title: this.detail.star ? '已设为星标朋友' : '已取消星标朋友',
+						icon: 'none',
+						position: 'bottom',
+
+					})
+				})
+
+			},
+			// 删除好友
+			deleteItem() {
+				// console.log(this.detail)
+				uni.showModal({
+					title: '删除联系人',
+					content: `将联系人“${this.detail.nickname}”删除，同时删除与联系人的聊天记录`,
+					confirmText: "删除",
+					confirmColor: '#dc3545',
+					success: (res) => {
+						if (res.confirm) {
+							$H.post('/friend/destroy', {
+								friend_id: this.detail.id
+							}).then(res => {
+								uni.showToast({
+									title: '删除好友成功',
+									icon: 'none'
+								})
+								uni.reLaunch({
+									url: '/pages/tabber/index/index'
+								})
+							})
+						}
+					}
+				})
+
+			},
+			// 加入黑名单
+			setBlack(e) {
+				uni.showModal({
+					title: '加入黑名单',
+					content: '加入黑名单，你将不再收到对方的消息，并且你们互相看不到对方朋友圈的更新',
+					cancelColor: '#000000',
+					confirmColor: '#0056b3',
+					success: (res) => {
+						if (res.confirm) {
+							let isblack = this.detail.isblack == 0 ? 1 : 0
+							$H.post('/friend/setblack/' + this.detail.id, {
+								isblack
+							}).then(res => {
+								this.detail.isblack = isblack
+							})
+							uni.showToast({
+								title: '加入黑名单成功',
+								icon: 'none',
+								position: 'bottom',
+							})
+						}
+					}
+				})
+
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

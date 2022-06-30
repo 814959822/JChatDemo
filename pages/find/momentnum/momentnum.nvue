@@ -1,0 +1,48 @@
+<template>
+	<view>
+		<free-nav-bar :showRight='false' showBack title="消息">
+		</free-nav-bar>
+		<view class="">
+			<view style="height: 200rpx;" class="p-2 flex-1 bg-danger flex ">
+				<view class="flex justify-start">
+					<free-avater :src="notice.avatar?notice.avatar:'/static/images/userpic.png'" size="60">
+					</free-avater>
+					<view class="flex flex-column">
+						<text class="font-md text-hover-primary"></text>
+						<text class="font">评论了你{{notice.content}}</text>
+					</view>
+				</view>
+				<view class="">
+					
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		data() {
+			return {
+				notice:{}
+			}
+		},
+		onLoad(e) {
+			if(e.notice){
+				this.notice=JSON.parse(e.notice)
+				console.log(this.notice);
+			}
+		},
+		components:{
+			freeNavBar
+		},
+		methods: {
+			
+		}
+	}
+</script>
+
+<style>
+
+</style>

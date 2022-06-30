@@ -1,0 +1,112 @@
+<template>
+	<view>
+		<free-nav-bar bgColor='bg-white' showBack>
+			<view slot='right'>
+				<free-main-button :disabled="isSubmit" @click='submit' name="完成"></free-main-button>
+			</view>
+			
+		</free-nav-bar>
+		<view style="height: 200rpx;" class="flex align-center justify-center">
+			<text class="font-weight-bold font-lg">设置备注和标签</text>
+		</view>
+
+		<view class="flex flex-column mb-3">
+			<text class="font-sm text-muted px-3 py-2">备注</text>
+			<input type="text" v-model="nickname" style="height: 100rpx;" class="mx-3 pl-3 rounded-2 font bg-chat"
+			@click="nicknameText" :placeholder="name" />
+		</view>
+
+		<view class="flex flex-column">
+			<text class="font-sm text-muted px-3 py-2">标签</text>
+			<view @click="openTagSet" class="mx-3 flex  align-center pt-3 pb-2 px-3 rounded-2 bg-chat">
+				<view class="flex flex-wrap">
+					<view v-for="(item,index) in tagList" :key='index' class=" mb-1 mr-1">
+						<text  class="font  main-text-color">{{item}}，</text>
+					</view>
+				</view>
+				<view v-if="!tagList.length" class="flex align-center justify-between mb-1 flex-1 mr-1">
+					<text class="font">添加标签</text>
+					<text class="iconfont text-muted font-lg">&#xe617;</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import auth from "@/common/mixin/auth.js"
+	import freeMainButton from "@/components/free-ui/free-main-button.vue"
+	import freeNavBar from "@/components/free-ui/free-nav-bar.vue"
+	export default {
+		mixins: [auth],
+		data() {
+			return {
+				isSubmit:true,
+				id: 0,
+				tagList: [],
+				nickname: '',
+				name:''
+			}
+		},
+		components: {
+			freeNavBar,
+			freeMainButton
+		},
+		onLoad(e) {
+			if (!e.params) {
+				return this.backToast()
+			}
+			let params = JSON.parse(e.params)
+			this.name=params.nickname
+			this.id = params.user_id
+			this.nickname = ""
+			this.tagList = params.tags == '' ? [] : params.tags.split(',')
+			uni.$on("updateTag", (e) => {
+				if(e.join(',')!==this.tagList.join(',')){
+					this.isSubmit=false
+				}
+				this.tagList = e
+				
+			})
+			// console.log(this.tagList)
+		},
+		beforeDestroy() {
+			uni.$off('updateTag')
+		},
+		methods: {
+			nicknameText(){
+				this.nickname=this.name
+				this.isSubmit=false
+			},
+			submit() {
+				$H.post('/friend/setremarktag/'+this.id,{
+					nickname:this.nickname||this.name,
+					tags:this.tagList.join(',')
+				}).then(res=>{
+					uni.showToast({
+						title:'修改成功',
+						icon:'none'
+					})
+					uni.navigateBack({
+						delta: 1
+					})
+					
+				})
+				
+				// uni.navigateBack({
+				// 	delta: 1
+				// })
+			},
+			openTagSet() {
+				uni.navigateTo({
+					url: "/pages/mail/user-tag-set/user-tag-set?detail=" + JSON.stringify(this.tagList) +'&id='+this.id
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

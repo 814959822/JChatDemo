@@ -1,0 +1,379 @@
+<template>
+	<view>
+		<free-transparent-bar @clickRight='clickRight' title="朋友圈" :scrollTop='scrollTop'></free-transparent-bar>
+		<view v-if="!show"
+			class="position-fixed top-0 bottom-0 left-0 right-0 bg-light flex justify-center align-center">
+			<text class="text-muted font">正在加载...</text>
+		</view>
+		<view class="position-relative" style="height: 640rpx;">
+			<image src="/static/images/bgmoment.jpg" mode="aspectFill" class="bg-chat w-100"
+				style="height: 595rpx;"></image>
+			<image @click='openUser' :src="avatar" style="width:120rpx ;height: 120rpx;right: 30rpx;"
+				class="bg-secondary rounded position-absolute bottom-0" mode=""></image>
+			<text class="font-md text-white position-absolute" style="bottom: 60rpx;right: 160rpx;">{{nickname}}</text>
+		</view>
+		<view style="height: 120rpx;">
+
+		</view>
+		<view @click="readMoments" v-if="notice.num" class="flex align-start justify-center" style="height: 200rpx;">
+			<view class="rounded flex align-center justify-between p-1" style="height: 80rpx;width: 290rpx;background-color: #5c5c5c;">
+				<free-avater :src="notice.avatar?notice.avatar:'/static/images/userpic.png'" size="60">
+				</free-avater>
+				<view class="flex flex-1 justify-center">
+					<text class="font-md  text-white">{{notice.num}}条新消息</text>
+				</view>
+				
+			</view>
+		</view>
+		<!-- 朋友圈列表样式 -->
+		<free-moment-list v-for="(item,index) in list" :key='index' :index="index" :item="item" @reply='replyEvent'
+			@action='doAction'>
+		</free-moment-list>
+		<!-- 评论框 -->
+		<free-popup ref='action' fixedBottom transformOrigin='center bottom'>
+			<view class="border-bottom flex px-3 bg-light align-center" style="height: 105rpx;">
+				<textarea @blur="focusState = false" @click='focus' :focus='focusState' v-model="content" fixed
+					class="bg-white flex flex-1 rounded px-2 p-1 mr-1 font-md" :adjust-position='false'
+					style=" height: 75rpx;" />
+
+				<!-- 表情 -->
+				<free-icon-button @click="changeFaceModal" iconfontSize='font-max' :icon="faceModal?'\ue608':'\ue605'">
+				</free-icon-button>
+				<!-- 发送按钮 -->
+				<view @click="send" :class="content.length===0?'bg-light border-2 border-secondary':'main-bg-color'"
+					class="ml-1 px-2 flex align-center py-1 rounded" style=" white-space: nowrap;height: 65rpx;">
+					<text class="font" :class="content.length===0?'text-light-muted':'text-white'">发送</text>
+				</view>
+			</view>
+
+			<!-- 表情 -->
+			<scroll-view scroll-y="true" :style="getKeyboardHeight" class="bg-light">
+				<view v-if="faceModal" class="flex flex-wrap">
+					<view style="width: 107rpx;height: 107rpx;" class="flex align-center rounded-2 justify-center"
+						hover-stay-time='50' hover-start-time='0' hover-class="bg-hover-light"
+						v-for="(item,index) in faceList" :key="index" @click="addFace(item)">
+						<text>{{item}}</text>
+
+					</view>
+				</view>
+			</scroll-view>
+		</free-popup>
+		<!-- 上拉加载  -->
+		<view v-if="list.length>=10" class="flex align-center justify-center bg-white py-4">
+			<text v-if="loadmore!==''" class="text-light-muted font-small">{{loadmore}}</text>
+			<view v-else class="flex align-center justify-center">
+				<view class="bg-light" style="height: 3rpx;width: 250rpx;"></view>
+				<text class="font-lg text-light-muted"> · </text>
+				<view class="bg-light" style="height: 3rpx;width: 250rpx;"></view>
+			</view>
+
+		</view>
+	</view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState
+	} from "vuex"
+	import $H from "@/common/free-lib/request.js"
+	import freeAvater from "@/components/free-ui/free-avater.vue"
+	import freeIconButton from "@/components/free-ui/free-icon-button.vue"
+	import freePopup from "@/components/free-ui/free-popup.vue"
+	import freeMomentList from "@/components/free-ui/free-moment-list.vue"
+	import freeTransparentBar from "@/components/free-ui/free-transparent-bar.vue"
+	export default {
+		data() {
+			return {
+				content: '',
+				scrollTop: 0,
+				list: [],
+				faceList: ["😀", "😁", "😂", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "😗",
+					"😙", "😚", "😇", "😐", "😑", "😶", "😏", "😣", "😥", "😮", "😯", "😪", "😫", "😴",
+					"😌", "😛", "😜", "😝", "😒", "😓", "😔", "😕", "😲", "😷", "😖", "😞", "😟", "😤",
+					"😢", "😭", "😦", "😧", "😨", "😬", "😰", "😱", "😳", "😵", "😡", "😠"
+				],
+				faceModal: false,
+				// 评论对象
+				commentindex: -1,
+
+				//键盘高度
+				KeyHeight: 0,
+				KeyboardHeight: 0,
+				// 键盘焦点
+				focusState: true,
+				page: 1,
+				loadmore: "上拉加载更多",
+				key: "moment_timeline",
+				reply_user: false,
+				show: false,
+				params: false
+			}
+		},
+		onPageScroll(e) {
+			this.scrollTop = e.scrollTop
+		},
+		components: {
+			freeTransparentBar,
+			freeMomentList,
+			freePopup,
+			freeIconButton,
+			freeAvater
+		},
+		onShow() {
+			this.getData()
+
+		},
+		onLoad(e) {
+			if (e.key) {
+				this.key = e.key
+			}
+			if (e.params) {
+				this.params = JSON.parse(decodeURIComponent(e.params))
+			}
+
+			this.page = 1
+			uni.$on('momentNotice', this.momentNotice)
+			// console.log(this.notice)
+			return this.show = true
+		},
+		destroyed() {
+			uni.$off('momentNotice', this.momentNotice)
+		},
+		//下拉刷新
+		onPullDownRefresh() {
+			this.page = 1
+			this.getData().then(res => {
+				uni.showToast({
+					title: "刷新成功",
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			}).catch(err => {
+				uni.showToast({
+					title: '刷新失败',
+					icon: 'none'
+				})
+				uni.stopPullDownRefresh()
+			})
+		},
+		// 上拉加载
+		onReachBottom() {
+			if (this.loadmore !== '上拉加载更多') {
+				return
+			}
+			this.page += 1
+			this.loadmore = '加载中...'
+			this.getData().catch(err => {
+				this.page -= 1
+				uni.showToast({
+					title: '加载失败',
+					icon: 'none'
+				})
+				this.loadmore = '上拉加载更多'
+			})
+		},
+		mounted() {
+			// 监听键盘高度
+			uni.onKeyboardHeightChange(res => {
+				this.KeyHeight = res.height
+				if (this.KeyboardHeight === 0) {
+					this.KeyboardHeight = res.height
+				}
+			})
+		},
+		computed: {
+			...mapState({
+				user: state => state.user.user,
+				notice: state => state.user.notice,
+				chat:state=>state.user.chat
+			}),
+			nickname() {
+				if (!this.params) {
+					return this.user.nickname || this.user.username
+				}
+				return this.params.name
+			},
+			avatar() {
+				let avatar = ''
+				avatar = !this.params ? this.user.avatar : this.params.avatar
+
+				return avatar = avatar || '/static/images/userpic.png'
+			},
+			getKeyboardHeight() {
+				// #ifdef APP-PLUS-NVUE
+				return this.KeyboardHeight ? `height:${this.KeyboardHeight}px;` : 'height:550rpx;'
+				// #endif
+				// #ifdef H5
+				if (this.faceModal) {
+					return 'height:350rpx;'
+				}
+				// #endif
+				return
+			}
+		},
+		methods: {
+			// 读取朋友圈
+			readMoments(){
+				// uni.navigateTo({
+				// 	url:'../../find/momentnum/momentnum?notice='+JSON.stringify(this.notice)
+				// })
+			this.chat.readMoments() 	
+			},
+			openUser() {
+				uni.navigateTo({
+					url: "/pages/mail/user-base/user-base?user_id=" + this.user.id
+				})
+			},
+			momentNotice() {
+				
+				this.getData()
+			},
+			// 回复评论
+			replyEvent(e) {
+				this.content = ''
+				this.faceModal = false
+				this.commentindex = e.index
+				this.reply_user = e.reply
+				this.$refs.action.show()
+			},
+			getData() {
+
+				return new Promise((result, reject) => {
+					let page = this.page
+					let param = ''
+					if (this.params && this.key == 'moment') {
+						param = '?user_id=' + this.params.id
+					}
+					$H.get(`/${this.key}/${this.page}${param}`).then(res => {
+						let page = this.page
+						this.list = page === 1 ? res : [...this.list, ...res],
+							this.loadmore = this.list.length === (page * 10) ? '上拉加载更多' :
+							''
+					}).then(res => {
+
+						result(res)
+					}).catch(err => {
+
+						reject(err)
+					})
+				})
+			},
+			// 点击操作菜单
+			doAction(e) {
+				uni.showActionSheet({
+					itemList: ['点赞', '评论'],
+					success: res => {
+						if (res.tapIndex === 0) {
+							this.doSupport(e)
+						} else {
+							this.content = ''
+							this.faceModal = false
+							this.focusState = true
+							this.commentindex = e.index
+							this.$refs.action.show()
+						}
+					},
+
+				});
+			},
+			// 点赞
+			doSupport(e) {
+				$H.post('/moment/like', {
+					id: e.item.moment_id
+				}).then(res => {
+					let i = e.item.likes.findIndex(item => item.id === this.user.id)
+					if (i !== -1) {
+						// 取消点赞
+						e.item.likes.splice(i, 1)
+					} else {
+						// 点赞
+						e.item.likes.push({
+							id: this.user.id,
+							name: this.user.nickname || this.user.username
+						})
+					}
+					uni.showToast({
+						title: i !== -1 ? '取消点赞成功' : '点赞成功',
+						icon: 'none'
+					})
+				})
+
+			},
+			// 添加表情
+			addFace(item) {
+				this.content += item
+			},
+			// 开启或关闭表情包面板
+			changeFaceModal() {
+
+				setTimeout(() => {
+					this.faceModal = !this.faceModal
+
+				}, 100)
+				if (!this.faceModal) {
+					uni.hideKeyboard()
+
+					this.focusState = false
+				} else {
+
+					this.focusState = true
+				}
+			},
+			// 发送
+			send() {
+				let item = this.list[this.commentindex]
+				$H.post('/moment/comment', {
+					id: item.moment_id,
+					content: this.content,
+					reply_id: this.reply_user ? this.reply_user.id : 0
+				}).then(res => {
+					item.comments.push({
+						content: this.content,
+						user: {
+							id: this.user.id,
+							name: this.user.nickname || this.user.username
+						},
+						reply: this.reply ? this.reply : null
+					})
+					uni.showToast({
+						title: '评论成功',
+						icon: 'none'
+					})
+				})
+				this.$refs.action.hide()
+			},
+			focus() {
+				this.faceModal = false
+			},
+			// 选择发表朋友圈类型
+			clickRight() {
+				let list = [{
+						name: '图文',
+						key: 'image'
+					},
+					{
+						name: '短视频',
+						key: 'video'
+					},
+					{
+						name: '文字',
+						key: 'content'
+					},
+				]
+				uni.showActionSheet({
+					itemList: list.map(v => v.name),
+					success: res => {
+						uni.navigateTo({
+							url: '../add-moment/add-moment?type=' + list[res.tapIndex].key
+						})
+					}
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+
+</style>

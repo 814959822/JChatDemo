@@ -1,0 +1,1 @@
+<view class="flex align-center justify-center data-v-5967f792"><text class="{{['freeBadge','','font-sm','','bg-danger','text-white','rounded-circle','data-v-5967f792',badgeClass]}}" style="{{'font-family:monospace;'+(badgeStyle)}}">{{value}}</text></view>

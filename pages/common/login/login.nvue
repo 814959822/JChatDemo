@@ -1,0 +1,178 @@
+<template>
+	<view style="flex: 1;" @touchstart="voiceTouchStart" @touchmove="voiceTouchMove">
+		<view v-if="!show"
+			class="position-fixed top-0 bottom-0 left-0 right-0 bg-light flex justify-center align-center">
+			<text class="text-muted font">正在加载...</text>
+		</view>
+
+		<view v-else>
+			<view style="height: 350rpx;" class="flex  align-center justify-center mt-5 mb-3">
+				<text @click.stop="change('login')"
+					:class="type==='reg'?'text-muted':'font-weight-bold border-dark border-bottom'" class="mx-2"
+					style="font-size: 50rpx;transition-property:all;transition-duration: .4s;">登陆</text>
+				<text @click.stop="change('reg')"
+					:class="type!=='reg'?'text-muted':'font-weight-bold border-dark border-bottom'" class="mx-2"
+					style="font-size: 50rpx;transition-property:all;transition-duration: .4s;">注册</text>
+			</view>
+			<view class="px-5">
+				<text class="font text-muted px-2 pb-2">JChat账号</text>
+				<input type="text" v-model="form.username" class="bg-light rounded font px-3 mb-3"
+					:placeholder="type==='reg'?'目前账号不可更改,请用心填写':'请输入账号'" style="height: 100rpx;">
+				<text class="font text-muted pb-2 px-2">密码</text>
+				<input type="text" v-model="form.password" class="bg-light rounded font px-3 mb-3" placeholder="请输入密码"
+					style="height: 100rpx;">
+				<view :class="type==='reg'?'origin':'target'">
+					<text class="font text-muted  pb-2 px-2">确认密码</text>
+					<input v-model="form.repassword" type="text" class="bg-light rounded font px-3 mb-3"
+						placeholder="确认密码" style="height: 100rpx;">
+				</view>
+
+			</view>
+			<view class="position-fixed bottom-0 left-0 right-0 ">
+				<view class="flex flex-1 p-5 align-center justify-center ">
+					<view class="flex-1 main-bg-color rounded p-3 flex align-center justify-center"
+						@click.stop="submit">
+						<text class="text-white font-md">{{type==='login'?'登 陆':'注 册'}}</text>
+					</view>
+				</view>
+				<view class="flex align-center mb-5 justify-center">
+					<text class='text-muted font p-2' @click.stop="changeType">{{type==='login'?'注册账号':'马上登陆'}}</text>
+					<text class='text-muted font'>｜</text>
+					<text class='text-muted font p-2s'>忘记密码</text>
+				</view>
+			</view>
+
+		</view>
+	</view>
+</template>
+
+<script>
+	import $H from "@/common/free-lib/request.js"
+	import $U from "@/common/free-lib/util.js"
+	export default {
+		data() {
+			return {
+				type: 'login',
+				show: false,
+				form: {
+					username: '',
+					password: "",
+					repassword: ''
+				},
+				RecordingStartX: 0
+			}
+		},
+		created() {
+			let token = $U.getStorage('token')
+			if (!token) {
+				// 用户未登录
+				// uni.showToast({
+				// 	 title:'请先登录', 
+				// 	 icon:'none'
+				// })
+				return this.show = true
+			}
+			uni.switchTab({
+				url: '../../tabber/index/index'
+			})
+		},
+
+		methods: {
+			// 录音相关
+			voiceTouchStart(e) {
+				this.RecordingStartX = e.changedTouches[0].screenX
+			},
+
+			// 主动取消
+			voiceTouchMove(e) {
+
+				let X = (e.changedTouches[0].screenX - this.RecordingStartX)
+				if (X >= 100) {
+					this.type = 'reg'
+
+				} else if (X <= -100) {
+					this.type = 'login'
+				}
+
+			},
+			change(e) {
+				this.type = e
+				this.form = {
+					username: '',
+					password: "",
+					repassword: ''
+				}
+				animation.transition(this.$refs.popup, {
+					styles: {
+						opacity: 1
+					},
+					duration: 100,
+					timingFunction: 'ease-in-out',
+				}, () => {
+
+				})
+			},
+			changeType() {
+
+
+				this.type = (this.type === 'login') ? 'reg' : 'login'
+
+				this.form = {
+					username: '',
+					password: "",
+					repassword: ''
+				}
+			},
+			submit() {
+				$H.post('/' + this.type, this.form, {
+					token: false
+				}).then(res => {
+					if (this.type === 'login') {
+						this.$store.dispatch('login', res)
+						uni.showToast({
+							title: '登录成功',
+							icon: 'none'
+						})
+						return uni.switchTab({
+							url: '/pages/tabber/index/index'
+						})
+					}
+					// 注册
+					this.changeType()
+					uni.showToast({
+						title: '注册成功，去登陆',
+						icon: 'none'
+					})
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.page {
+		background-color: #ededed;
+		/* #ifndef APP-PLUS-NVUE */
+		min-height: 100vh;
+		height: auto;
+		/* #endif */
+		/* #ifdef APP-PLUS-NVUE */
+		flex: 1;
+		/* #endif */
+	}
+
+	.target {
+	
+		opacity: 0;
+		transition-property: opacity;
+		transition-duration: .2s;
+	}
+
+	.origin {
+		// 这里可以简写哈
+		
+		opacity: 1;
+		transition-property: opacity;
+		transition-duration: .35s;
+	}
+</style>
